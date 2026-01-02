@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:15-alpine
+    container_name: grindermaster-postgres
+    environment:
+      POSTGRES_DB: grindermaster
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - grindermaster-network
+    restart: unless-stopped
+
+  # Redis для кэша и сессий
+  redis:
+    image: redis:7-alpine
+    container_name: grindermaster-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - grindermaster-network
+    restart: unless-stopped
+
+  # API Backend (Next.js)
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: grindermaster-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/grindermaster
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis123}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-nextauth-secret}
+      NEXTAUTH_URL: ${DOMAIN:-http://localhost:3002}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - ./api/uploads:/app/uploads
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - grindermaster-network
+    restart: unless-stopped
+    command: npm run dev
+
+  # Admin Panel (React Admin)
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: grindermaster-admin
+    environment:
+      REACT_APP_API_URL: ${DOMAIN:-http://localhost:3002}/api
+      REACT_APP_UPLOAD_URL: ${DOMAIN:-http://localhost:3002}/uploads
+    ports:
+      - "3001:3000"
+    depends_on:
+      - api
+    networks:
+      - grindermaster-network
+    restart: unless-stopped
+
+  # Frontend (Next.js сайт)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: grindermaster-frontend
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: ${DOMAIN:-http://localhost:3002}/api
+      NEXT_PUBLIC_UPLOAD_URL: ${DOMAIN:-http://localhost:3002}/uploads
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./frontend/.next:/app/.next
+    depends_on:
+      - api
+    networks:
+      - grindermaster-network
+    restart: unless-stopped
+    command: npm run dev
+
+  # Nginx балансировщик (для VPS)
+  nginx:
+    image: nginx:alpine
+    container_name: grindermaster-nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./api/uploads:/var/www/uploads
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+      - admin
+      - frontend
+    networks:
+      - grindermaster-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  grindermaster-network:
+    driver: bridge

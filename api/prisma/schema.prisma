@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Product {
+  id             String    @id @default(cuid())
+  name           String
+  slug           String    @unique
+  description    String
+  price          Decimal
+  categoryId     String?
+  category       Category? @relation(fields: [categoryId], references: [id])
+  imageUrl       String?
+  specifications Json      @default("[]")
+  featured       Boolean   @default(false)
+  active         Boolean   @default(true)
+  displayOnSite  Boolean   @default(true)
+  sortOrder      Int       @default(0)
+  requests       Request[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("products")
+}
+
+model Service {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String
+  price         String
+  category      String   @default("diagnostics")
+  icon          String?
+  duration      String?
+  warranty      Boolean  @default(false)
+  featured      Boolean  @default(false)
+  active        Boolean  @default(true)
+  displayOnSite Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  requests      Request[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("services")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  role         UserRole  @default(USER)
+  passwordHash String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Request {
+  id        String      @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  type      RequestType
+  productId String?
+  product   Product?    @relation(fields: [productId], references: [id])
+  serviceId String?
+  service   Service?    @relation(fields: [serviceId], references: [id])
+  message   String?
+  status    RequestStatus @default(NEW)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("requests")
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  name      String
+  key       String    @unique
+  allowedIps String[] @default([])
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("api_keys")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum RequestType {
+  PRODUCT
+  SERVICE
+}
+
+enum RequestStatus {
+  NEW
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
