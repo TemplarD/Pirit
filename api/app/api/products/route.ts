@@ -74,3 +74,36 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+// POST /api/products - Создать новый товар
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    
+    const product = await prisma.product.create({
+      data: {
+        name: body.name,
+        slug: body.slug,
+        description: body.description,
+        price: body.price,
+        imageUrl: body.imageUrl || null,
+        categoryId: body.categoryId || null,
+        featured: body.featured || false,
+        active: body.active !== false,
+        displayOnSite: body.displayOnSite !== false,
+        sortOrder: body.sortOrder || 1
+      }
+    })
+
+    // Очищаем кэш
+    await cacheSet('products:*', null, 0)
+
+    return NextResponse.json({ data: product }, { status: 201 })
+  } catch (error) {
+    console.error('Products POST error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error.message },
+      { status: 500 }
+    )
+  }
+}

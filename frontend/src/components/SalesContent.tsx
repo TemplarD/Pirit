@@ -67,6 +67,27 @@ export default function SalesContent() {
     // Логика отправки формы
   }
 
+  const handleBuyClick = (product: any) => {
+    // Заполняем форму данными о товаре
+    setFormData(prev => ({
+      ...prev,
+      product: product.name
+    }))
+    
+    // Прокручиваем к форме заказа
+    const formElement = document.getElementById('order-form')
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth' })
+    }
+    
+    // Анимация кнопки
+    const button = event?.target as HTMLElement
+    if (button) {
+      button.classList.add('scale-95')
+      setTimeout(() => button.classList.remove('scale-95'), 150)
+    }
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -150,7 +171,10 @@ export default function SalesContent() {
                     <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                       {product.price}
                     </span>
-                    <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">
+                    <button 
+                      onClick={() => handleBuyClick(product)}
+                      className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95"
+                    >
                       {t('sales.buyButton')}
                     </button>
                   </div>
@@ -174,7 +198,7 @@ export default function SalesContent() {
               {t('sales.orderFormTitle')}
             </h2>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} id="order-form" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

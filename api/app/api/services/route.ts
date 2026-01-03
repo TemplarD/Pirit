@@ -104,3 +104,33 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// DELETE /api/services/[id] - Удалить услугу (только для админа)
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id') || request.url.split('/').pop()
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Service ID is required' },
+        { status: 400 }
+      )
+    }
+
+    await prisma.service.delete({
+      where: { id }
+    })
+
+    // Очищаем кэш
+    await cacheSet('services:*', null, 1)
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Services DELETE error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
