@@ -1,5 +1,10 @@
 // Middleware для логирования действий в админке
 
+// Глобальные переменные для отслеживания производительности
+let pageLoadStartTime = Date.now()
+let errorCount = 0
+let lastError: string | null = null
+
 // Функция для определения браузера
 function detectBrowser(userAgent: string): string {
   if (userAgent.includes('Chrome')) return 'Chrome'
@@ -34,7 +39,7 @@ async function sendLog(type: string, action: string, details: any = {}) {
       timestamp: new Date().toISOString()
     }
 
-    await fetch('http://localhost:3004/api/logs', {
+    await fetch('http://localhost:3000/api/logs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,19 +51,97 @@ async function sendLog(type: string, action: string, details: any = {}) {
   }
 }
 
+// Логирование ошибок
+export function logError(error: Error | string, context?: string) {
+  errorCount++
+  lastError = error instanceof Error ? error.message : error
+  
+  sendLog('error', 'javascript_error', {
+    message: lastError,
+    context,
+    stack: error instanceof Error ? error.stack : null,
+    errorCount,
+    url: window.location.href,
+    timestamp: new Date().toISOString()
+  })
+}
+
+// Логирование производительности
+export function logPerformance(metric: string, value: number) {
+  sendLog('performance', metric, {
+    value,
+    url: window.location.href,
+    loadTime: Date.now() - pageLoadStartTime
+  })
+}
+
+// Логирование сетевых ошибок
+export function logNetworkError(url: string, status: number, error: string) {
+  sendLog('error', 'network_error', {
+    url,
+    status,
+    error,
+    timestamp: new Date().toISOString()
+  })
+}
+
 // Логирование посещений
 export function logVisit(page: string, duration?: number) {
-  sendLog('visit', 'page_view', { page, duration })
+  sendLog('visit', 'page_view', {
+    page,
+    duration,
+    loadTime: Date.now() - pageLoadStartTime,
+    timestamp: new Date().toISOString()
+  })
 }
 
 // Логирование действий
-export function logAction(action: string, details: any = {}) {
-  sendLog('action', action, details)
+export function logAction(action: string, details?: any) {
+  sendLog('action', action, {
+    ...details,
+    timestamp: new Date().toISOString()
+  })
 }
 
-// Логирование ошибок
-export function logError(error: string, details: any = {}) {
-  sendLog('error', 'error_occurred', { error, ...details })
+// Инициализация глобального обработчика ошибок
+export function initErrorTracking() {
+  // Отслеживание ошибок JavaScript
+  window.addEventListener('error', (event) => {
+    logError(event.error || event.message, 'Global Error Handler')
+  })
+
+  // Отслеживание промисов
+  window.addEventListener('unhandledrejection', (event) => {
+    logError(event.reason instanceof Error ? event.reason.message : String(event.reason), 'Unhandled Promise Rejection')
+  })
+
+  // Отслеживание загрузки страницы
+  window.addEventListener('load', () => {
+    const loadTime = Date.now() - pageLoadStartTime
+    logPerformance('page_load_time', loadTime)
+    logVisit(window.location.pathname, loadTime)
+  })
+
+  // Отслеживание видимости страницы
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      logAction('page_hidden', { 
+        timeOnPage: Date.now() - pageLoadStartTime 
+      })
+    } else if (document.visibilityState === 'visible') {
+      pageLoadStartTime = Date.now()
+      logAction('page_visible')
+    }
+  })
+}
+
+// Получение статистики ошибок
+export function getErrorStats() {
+  return {
+    errorCount,
+    lastError,
+    uptime: Date.now() - pageLoadStartTime
+  }
 }
 
 // Логирование CRUD операций

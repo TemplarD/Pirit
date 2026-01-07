@@ -70,8 +70,11 @@ model User {
   name         String?
   role         UserRole  @default(USER)
   passwordHash String?
+  telegramId   String?   // Для привязки Telegram
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  authSessions AuthSession[]
+  twoFactorAuth TwoFactorAuth?
 
   @@map("users")
 }
@@ -92,6 +95,36 @@ model Request {
   updatedAt DateTime    @updatedAt
 
   @@map("requests")
+}
+
+model AuthSession {
+  id               String    @id @default(cuid())
+  userId           String
+  email            String
+  token            String    @unique
+  isActive         Boolean   @default(true)
+  twoFactorCode    String?   // Временный код для 2FA
+  twoFactorExpires DateTime? // Срок действия кода 2FA
+  expiresAt        DateTime
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_sessions")
+}
+
+model TwoFactorAuth {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  email       String
+  secret      String   // Секрет для Google Authenticator
+  backupCodes String[] // Резервные коды
+  isEnabled   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_auth")
 }
 
 model ApiKey {

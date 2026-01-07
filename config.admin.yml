@@ -1,0 +1,432 @@
+# GrinderMaster Configuration File
+# Единый конфигурационный файл для всех компонентов проекта
+
+project:
+  name: "GrinderMaster"
+  version: "1.0.0"
+  description: "Корпоративный сайт с панелью управления"
+  environment: "development"
+
+# Порты для всех сервисов
+ports:
+  frontend:
+    development: 3002
+    production: 3002
+    docker: 3002
+    testing: 80
+    description: "Основной сайт Next.js"
+  
+  api:
+    development: 3000
+    production: 3000
+    docker: 3004
+    external: 3000
+    description: "Next.js API Backend"
+  
+  admin:
+    development: 3001
+    production: 3001
+    docker: 3001
+    description: "React Admin панель управления"
+  
+  database:
+    postgresql: 5432
+    redis: 6379
+    description: "Базы данных"
+  
+  nginx:
+    http: 80
+    https: 443
+    description: "Nginx балансировщик"
+
+# Хосты для разных окружений
+hosts:
+  development:
+    frontend: "http://localhost:3002"
+    api: "http://localhost:3004"
+    admin: "http://localhost:3001"
+    database: "localhost:5432"
+    redis: "localhost:6379"
+  
+  testing:
+    frontend: "http://localhost:80"
+    api: "http://localhost:3004"
+    admin: "http://localhost:3001"
+    database: "localhost:5432"
+    redis: "localhost:6379"
+  
+  production:
+    frontend: "${PRODUCTION_FRONTEND_URL}"
+    api: "${PRODUCTION_API_URL}"
+    admin: "${PRODUCTION_ADMIN_URL}"
+    database: "postgres:5432"
+    redis: "redis:6379"
+  
+  docker:
+    frontend: "http://frontend:3000"
+    api: "http://api:3000"
+    admin: "http://admin:3000"
+    database: "postgres:5432"
+    redis: "redis:6379"
+
+# Конфигурация админ-панели
+admin:
+  authentication:
+    type: "jwt"
+    secret: "${JWT_SECRET}"
+    expiresIn: "24h"
+    refreshTokenExpiry: "7d"
+  
+  security:
+    ipWhitelist:
+      development:
+        - "127.0.0.1"
+        - "localhost"
+        - "::1"
+        - "172.16.0.0/12"
+        - "10.0.0.0/8"
+        - "192.168.0.0/16"
+      production:
+        - "${PRODUCTION_ADMIN_IP}"
+    
+    rateLimit:
+      requests: 1000
+      window: "1h"
+      skipSuccessfulRequests: false
+    
+    cors:
+      origin:
+        - "http://localhost:3001"
+        - "${PRODUCTION_ADMIN_URL}"
+      credentials: true
+  
+  features:
+    fileUpload:
+      maxSize: "10MB"
+      allowedTypes:
+        - "image/jpeg"
+        - "image/png"
+        - "image/webp"
+        - "model/gltf-binary"
+      uploadPath: "/uploads"
+      thumbnails: true
+    
+    3dModels:
+      maxSize: "50MB"
+      formats:
+        - ".glb"
+        - ".gltf"
+      compression: true
+      lodLevels: 3
+    
+    export:
+      formats:
+        - "csv"
+        - "xlsx"
+        - "json"
+      maxRecords: 10000
+    
+    notifications:
+      email: true
+      telegram: true
+      browser: true
+  
+  ui:
+    theme: "light"
+    language: "ru"
+    timezone: "Europe/Moscow"
+    dateFormat: "DD.MM.YYYY"
+    numberFormat: "ru-RU"
+    itemsPerPage: 25
+
+# Конфигурация API
+api:
+  database:
+    url: "${DATABASE_URL}"
+    pool:
+      min: 2
+      max: 10
+      idleTimeoutMillis: 30000
+      connectionTimeoutMillis: 2000
+    logging: true
+    migrations: true
+  
+  redis:
+    url: "${REDIS_URL}"
+    keyPrefix: "grindermaster:"
+    ttl:
+      default: 3600
+      short: 300
+      long: 86400
+  
+  security:
+    helmet: true
+    rateLimit:
+      windowMs: 3600000
+      max: 1000
+      message: "Too many requests from this IP"
+    cors:
+      origin:
+        - "http://localhost:3002"
+        - "${PRODUCTION_FRONTEND_URL}"
+      methods:
+        - "GET"
+        - "POST"
+        - "PUT"
+        - "DELETE"
+        - "OPTIONS"
+      allowedHeaders:
+        - "Content-Type"
+        - "Authorization"
+  
+  features:
+    caching:
+      enabled: true
+      strategies:
+        - "memory"
+        - "redis"
+      defaultTtl: 300
+    
+    logging:
+      level: "info"
+      format: "json"
+      includeStackTrace: true
+    
+    validation:
+      strict: true
+      sanitize: true
+
+# Конфигурация фронтенда
+frontend:
+  performance:
+    optimization: true
+    compression: true
+    imageOptimization: true
+    bundleAnalyzer: false
+  
+  features:
+    3d:
+      enabled: true
+      renderer: "three"
+      antialias: true
+      shadows: true
+      maxTextureSize: 2048
+    
+    animations:
+      gsap: true
+      framerMotion: true
+      reduceMotion: true
+    
+    seo:
+      autoGenerate: true
+      sitemap: true
+      robotsTxt: true
+      schemaOrg: true
+  
+  build:
+    output: "standalone"
+    experimental:
+      appDir: true
+      serverComponentsExternalPackages:
+        - "@prisma/client"
+
+# Конфигурация деплоя
+deployment:
+  development:
+    command: "docker compose up -d"
+    services:
+      - "postgres"
+      - "redis"
+      - "api"
+      - "admin"
+      - "frontend"
+    healthCheck:
+      endpoint: "/api/health"
+      timeout: 30000
+      retries: 3
+  
+  testing:
+    command: "docker compose up -d"
+    services:
+      - "postgres"
+      - "redis"
+      - "api"
+      - "admin"
+      - "frontend"
+    ports:
+      frontend: 80
+    healthCheck:
+      endpoint: "/api/health"
+      timeout: 30000
+      retries: 3
+    ssl: false
+  
+  production:
+    command: "docker compose --profile production up -d"
+    services:
+      - "postgres"
+      - "redis"
+      - "api"
+      - "admin"
+      - "nginx"
+    ssl: true
+    monitoring:
+      sentry: true
+      uptime: true
+      analytics: true
+  
+  vps:
+    requirements:
+      cpu: "2 cores"
+      memory: "4GB RAM"
+      storage: "50GB SSD"
+      os: "Ubuntu 22.04 LTS"
+    
+    setup:
+      docker: true
+      nginx: true
+      ssl: true
+      firewall: true
+
+# Логирование
+logging:
+  level: "info"
+  format: "json"
+  transports:
+    - "console"
+    - "file"
+  
+  files:
+    error: "logs/error.log"
+    combined: "logs/combined.log"
+    access: "logs/access.log"
+  
+  rotation:
+    enabled: true
+    maxSize: "10MB"
+    maxFiles: 5
+
+# Мониторинг
+monitoring:
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    interval: 30000
+  
+  health:
+    checks:
+      - "database"
+      - "redis"
+      - "disk"
+      - "memory"
+    interval: 60000
+  
+  alerts:
+    email: "${SMTP_USER}"  # grinder_kirov@mailnesia.com
+    telegram: "${TELEGRAM_CHAT_ID}"
+    thresholds:
+      cpu: 80
+      memory: 85
+      disk: 90
+
+# Резервное копирование
+backup:
+  database:
+    enabled: true
+    schedule: "0 2 * * *"
+    retention: 30
+    compression: true
+    destination: "backups/database"
+  
+  files:
+    enabled: true
+    schedule: "0 3 * * 0"
+    retention: 7
+    compression: true
+    destination: "backups/files"
+  
+  cloud:
+    enabled: false
+    provider: "s3"
+    bucket: "grindermaster-backups"
+    region: "ru-central1"
+
+# Уведомления
+notifications:
+  email:
+    smtp:
+      host: "${SMTP_HOST}"
+      port: 587
+      secure: false
+      auth:
+        user: "${SMTP_USER}"
+        pass: "${SMTP_PASS}"
+    from: "noreply@${SMTP_HOST}"
+    templates: true
+  
+  telegram:
+    botToken: "${TELEGRAM_BOT_TOKEN}"
+    chatId: "${TELEGRAM_CHAT_ID}"
+    enabled: true
+  
+  types:
+    newRequest: true
+    systemError: true
+    backupComplete: true
+    securityAlert: true
+
+# SEO настройки
+seo:
+  default:
+    title: "ГриндерМастер - Профессиональное оборудование"
+    description: "Продажа и ремонт гриндеров, ленточно-шлифовальных станков"
+    keywords:
+      - "гриндер"
+      - "шлифовальный станок"
+      - "ремонт оборудования"
+    author: "ГриндерМастер"
+  
+  openGraph:
+    type: "website"
+    locale: "ru_RU"
+    siteName: "ГриндерМастер"
+  
+  twitter:
+    card: "summary_large_image"
+    site: "@grindermaster"
+  
+  robots:
+    index: true
+    follow: true
+    googleBot:
+      index: true
+      follow: true
+      maxVideoPreview: -1
+      maxImagePreview: "large"
+      maxSnippet: -1
+
+# Настройки разработки
+development:
+  hotReload: true
+  debugMode: true
+  mockData: true
+  apiMocking: false
+  profiling: false
+  verboseLogging: true
+
+# Тестирование
+testing:
+  unit:
+    framework: "jest"
+    coverage: true
+    threshold: 80
+  
+  integration:
+    framework: "playwright"
+    headless: true
+    timeout: 30000
+  
+  e2e:
+    framework: "cypress"
+    baseUrl: "http://localhost:3002"
+    video: true

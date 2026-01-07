@@ -14,7 +14,9 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  Divider
+  Divider,
+  Alert,
+  Tooltip
 } from '@mui/material'
 import { 
   BarChart as BarChartIcon,
@@ -25,9 +27,13 @@ import {
   Error as ErrorIcon,
   Computer as ComputerIcon,
   Public as PublicIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Speed as SpeedIcon,
+  Memory as MemoryIcon,
+  NetworkCheck as NetworkCheckIcon,
+  BugReport as BugReportIcon
 } from '@mui/icons-material'
-import { logVisit, logAction } from './loggingMiddleware'
+import { logVisit, logAction, getErrorStats } from './loggingMiddleware'
 
 // Типы для TypeScript
 interface Analytics {

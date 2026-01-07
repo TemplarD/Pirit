@@ -1,13 +1,13 @@
 import { DataProvider, fetchUtils } from 'react-admin'
 
-const apiUrl = 'http://localhost:3004/api'
+const apiUrl = 'http://localhost:3000/api'
 
 const httpClient = async (url: string, options: any = {}) => {
   if (!options.headers) {
     options.headers = new Headers({ Accept: 'application/json' })
   }
   
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('admin_token')
   if (token) {
     options.headers.set('Authorization', `Bearer ${token}`)
   }
