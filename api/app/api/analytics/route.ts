@@ -40,15 +40,15 @@ export async function GET(request: NextRequest) {
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     }
 
-    const filteredLogs = logs.filter(log => new Date(log.timestamp) >= startDate)
+    const filteredLogs = logs.filter((log: any) => new Date(log.timestamp) >= startDate)
 
     // Считаем статистику
-    const visits = filteredLogs.filter(log => log.type === 'visit')
-    const actions = filteredLogs.filter(log => log.type === 'action')
-    const errors = filteredLogs.filter(log => log.type === 'error')
+    const visits = filteredLogs.filter((log: any) => log.type === 'visit')
+    const actions = filteredLogs.filter((log: any) => log.type === 'action')
+    const errors = filteredLogs.filter((log: any) => log.type === 'error')
 
     // Уникальные пользователи
-    const uniqueUsers = new Set(visits.map(log => log.userId)).size
+    const uniqueUsers = new Set(visits.map((log: any) => log.userId)).size
 
     // Статистика браузеров
     const browserStats = visits.reduce((acc: any, log: any) => {
@@ -61,14 +61,14 @@ export async function GET(request: NextRequest) {
     }, {})
 
     // Добавляем действия и ошибки к статистике браузеров
-    actions.forEach(log => {
+    actions.forEach((log: any) => {
       const browser = log.browser || 'Unknown'
       if (browserStats[browser]) {
         browserStats[browser].actions++
       }
     })
 
-    errors.forEach(log => {
+    errors.forEach((log: any) => {
       const browser = log.browser || 'Unknown'
       if (browserStats[browser]) {
         browserStats[browser].errors++
@@ -86,14 +86,14 @@ export async function GET(request: NextRequest) {
     }, {})
 
     // Добавляем действия и ошибки к статистике ОС
-    actions.forEach(log => {
+    actions.forEach((log: any) => {
       const os = log.os || 'Unknown'
       if (osStats[os]) {
         osStats[os].actions++
       }
     })
 
-    errors.forEach(log => {
+    errors.forEach((log: any) => {
       const os = log.os || 'Unknown'
       if (osStats[os]) {
         osStats[os].errors++

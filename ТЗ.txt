@@ -1,526 +1,6481 @@
-## **Техническое задание: Корпоративный сайт "ГриндерМастер"**
-**Архитектура:** Custom Next.js + PostgreSQL + React Admin  
-**Цель:** Два лендинга в одном сайте (продажа гриндеров + услуги ремонта) с современным дизайном, анимациями и 3D.
-
-### **1. Технологический стек (ОБНОВЛЕННЫЙ)**
-
-#### **Фронтенд:**
-- **Основной сайт:** Next.js 14 (App Router) + TypeScript + Tailwind CSS
-- **3D и анимации:** Three.js / React Three Fiber + GSAP + Framer Motion
-- **Админ-панель:** React Admin + Vite + TypeScript
-
-#### **Бэкенд:**
-- **API:** Next.js API Routes + Prisma ORM
-- **База данных:** PostgreSQL (production/development)
-- **Кэширование:** Redis (опционально для production)
-- **Аутентификация:** NextAuth.js
-
-#### **Инфраструктура:**
-- **Контейнеризация:** Docker + Docker Compose
-- **Балансировщик:** Nginx (production)
-- **Хостинг:**
-  - Frontend (статик): Vercel (основной) / Netlify (резерв)
-  - Backend (API + Admin): Управляемый VPS (TimeWeb Cloud, Selectel)
-  - База данных: Managed PostgreSQL или self-hosted
-- **Домен:** Основной `.ru`, резервный `.com` с редиректом
-
-### **2. Структура и функционал сайта**
-
-#### **Общие разделы (для обоих лендингов):**
-1. **Хедер:** Логотип + навигация (Продажа / Ремонт / Контакты) + телефон
-2. **Футер:** Контакты, соцсети, форма быстрой заявки, карта проезда
-3. **Система предзагрузки** с логотипом и прогресс-баром
-
-#### **Лендинг "Продажа гриндеров":**
-- **Главный экран:** Видео-фон работы гриндера + 3D модель гриндера (можно вращать) + кнопка "Подробнее"
-- **Преимущества:** Анимированные карточки с параллакс-эффектом при скролле
-- **Каталог:** Сетка моделей гриндеров (данные из Next.js API)
-- **Каждая карточка товара:** Галерея фото, характеристики, 3D модель (легкая, встраиваемая), кнопка "Рассчитать стоимость"
-- **Примеры работ:** Интерактивная галерея до/после с горизонтальным скроллом
-- **Отзывы:** Слайдер с видео-отзывами
-- **Расчет стоимости:** Многоступенчатый калькулятор (выбор модели, опций, мощности)
-
-#### **Лендинг "Ремонт оборудования":**
-- **Главный экран:** Анимация "ремонтирующихся" деталей гриндера
-- **Услуги:** Аккордеон с видами ремонта (замена двигателя, балансировка и т.д.)
-- **Форма диагностики:** Интерактивная форма с выбором симптомов поломки
-- **Галерея ремонтов:** Фото и видео выполненных работ
-- **Прайс-лист:** Интерактивная таблица с фильтрами по типу ремонта
-- **Система записи:** Календарь с выбором даты/времени (интеграция с Google Calendar)
-
-#### **Общие интерактивные элементы:**
-- **Параллакс-эффекты** на фоновых изображениях
-- **Анимация появления** элементов при скролле
-- **Интерактивная карта** с маркерами офиса и цеха
-- **Виджеты онлайн-записи** (Calendly аналог)
-- **Чат-бот** для первичной консультации (Tidio/WhatsApp)
-
-### **3. Админ-панель (React Admin + Next.js API)**
-
-#### **Структура контента:**
-1. **Модели гриндеров:**
-   - Название, slug, категория
-   - Описание, характеристики (JSON поле)
-   - Галерея изображений (до 10 шт.)
-   - 3D модель (файл .glb)
-   - Цена (базовая)
-   - Связанные опции
-
-2. **Примеры работ:**
-   - Заголовок, описание
-   - Фото "до" и "после"
-   - Видео (YouTube/Vimeo ссылка)
-   - Тип (продажа/ремонт)
-   - Теги
-
-3. **Услуги ремонта:**
-   - Название, категория
-   - Описание, сроки
-   - Цена (диапазон)
-   - Иконка
-
-4. **Отзывы:**
-   - Имя, город
-   - Текст, видео-ссылка
-   - Дата, рейтинг (1-5)
-   - Тип услуги (привязка)
-
-5. **Страницы (для редактирования текстов):**
-   - О компании
-   - Гарантии
-   - Доставка и оплата
-
-6. **Настройки сайта:**
-   - Контакты (телефоны, email, адресы)
-   - Соцсети
-   - SEO-теги по умолчанию
-   - Скрипты аналитики
-
-#### **Роли пользователей:**
-- **Admin** — полный доступ ко всем функциям
-- **Manager** — редактирование контента и обработка заявок
-- **Viewer** — только просмотр данных
-
-#### **Доступ к админке:**
-- **Локально:** `http://localhost:3001` (React Admin)
-- **Production:** доступ по белому IP + JWT токены
-- **Безопасность:** Rate limiting, IP фильтрация, логирование
-
-### **4. Особые требования к производительности и SEO**
-
-#### **Производительность:**
-- **API кэширование:** Redis для популярных запросов
-- **Изображения:** WebP + AVIF, lazy loading
-- **3D модели:** LOD-версии для мобильных
-- **Код-сплиттинг:** динамический импорт тяжелых компонентов
-- **Core Web Vitals:** LCP < 2.5s, FID < 100ms, CLS < 0.1
-
-#### **SEO:**
-- **Динамические мета-теги** для каждой страницы
-- **JSON-LD разметка** (LocalBusiness, Product, Service)
-- **Автогенерация sitemap.xml** через Next.js
-- **Чистые URL** (/products/grinder-pro-1000)
-- **Адаптация под Яндекс и Google**
-
-#### **Адаптивность:**
-- **Mobile First подход**
-- **Адаптация 3D сцены** под мобильные (упрощенная версия)
-- **Сенсорное управление** для 3D моделей
-
-### **5. Этапы разработки и тестирования**
-
-#### **Этап 1: Локальная разработка (ВЫПОЛНЕН ✅)**
-```
-└── Perit/
-    ├── frontend/          # Next.js приложение
-    ├── api/               # Next.js API Routes
-    ├── admin/             # React Admin панель
-    ├── database/          # SQL миграции
-    ├── docker-compose.yml # PostgreSQL + Redis
-    └── nginx/             # Конфигурация для VPS
-```
-
-**Доступ для "белого" ИП:**
-1. **Локальный доступ к API:**
-   - API: `http://localhost:3004/api/*`
-   - Админка: `http://localhost:3001`
-   - Фронтенд: `http://localhost:3002`
-
-2. **Туннели для демонстрации:**
-   - **Вариант А:** ngrok (`ngrok http 3004` и `ngrok http 3001`)
-   - **Вариант Б:** Cloudflared Tunnel (бесплатно)
-   - **Вариант В:** LocalTunnel
-
-3. **Демо-данные:**
-   - ✅ 3 категории товаров
-   - ✅ 2 модели гриндеров с характеристиками
-   - ✅ 2 услуги ремонта
-   - ✅ Тестовые заявки в БД
-
-#### **Этап 2: Staging-окружение**
-1. **Хостинг:** VPS с Docker Compose
-2. **Домен:** `stage.grindermaster.ru` (субдомен)
-3. **Особенности:**
-   - Все данные тестовые
-   - Включен режим обслуживания
-   - Доступ по IP-адресам (ограничение в Nginx)
-
-#### **Этап 3: Продакшен**
-1. **Инфраструктура:**
-   ```
-   Домен → Cloudflare → Vercel (Frontend)
-                          ↓
-                    API запросы → VPS (Next.js API + PostgreSQL)
-                          ↓
-                    React Admin → VPS (защищенный доступ)
-   ```
-
-2. **Резервное копирование:**
-   - Daily backup базы данных (автоматически на S3)
-   - Backup медиафайлов
-   - Git репозитории с полным бэкапом
-
-3. **Мониторинг:**
-   - UptimeRobot (доступность)
-   - Sentry (ошибки)
-   - Google Analytics 4 + Яндекс.Метрика
-
-### **6. Технические требования к разработке**
-
-#### **Для 3D:**
-- **Three.js через React Three Fiber**
-- **Оптимизация:** только необходимые детали, текстуры < 2MB
-- **Preload 3D моделей**
-- **Fallback:** статичное изображение если WebGL не поддерживается
-
-#### **Для анимаций:**
-- **GSAP** для сложных последовательностей
-- **Framer Motion** для компонентных анимаций
-- **Отключение анимаций** при `prefers-reduced-motion`
-
-#### **API взаимодействие:**
-- **Next.js API Routes** (REST API)
-- **Кеширование запросов** (SWR/React Query)
-- **Retry logic** при ошибках
-- **TypeScript** для типизации данных
-
-#### **Безопасность:**
-- **CORS настройки** в Next.js middleware
-- **Rate limiting** для API (1000 запросов/час)
-- **IP фильтрация** для админских функций
-- **Валидация всех форм** на фронтенде и бэкенде
-
-### **7. Поставка проекта**
-
-#### **Что будет передано:**
-1. **Исходный код:**
-   - Единый репозиторий с 3 приложениями (frontend, api, admin)
-   - Docker конфигурации
-   - SQL миграции
-   - Переменные окружения (.env.example)
-
-2. **Документация:**
-   - API документация (Swagger/OpenAPI)
-   - Инструкция по развертыванию на VPS
-   - Гайд по использованию админки
-   - SEO руководство
-
-3. **Административный доступ:**
-   - К админке React Admin
-   - К панели управления VPS
-   - К аккаунту Vercel
-   - К Cloudflare (если используется)
-
-4. **Тестировочные данные:**
-   - 5 моделей гриндеров с характеристиками
-   - 10 примеров работ
-   - 7 услуг ремонта
-   - 8 тестовых отзывов
+## **Техническое задание: Корпоративный сайт "ГриндерМастер" с интернет-магазином и 3D-конструктором**
+**Версия:** 4.1 (С системой тестирования, дашбордами и конфигурацией по этапам)
+**Архитектура:** Next.js 15 + PostgreSQL + React Admin + 3D Visualizer
+**Цель:** Единая платформа с лендингами, полноценным интернет-магазином, онлайн-оплатой, интерактивным 3D-конструктором гриндеров и расширенной системой авторизации.
 
 ---
 
-## **8. SEO и система продвижения (полный раздел)**
+# **ЧАСТЬ 1. РАСШИРЕННЫЙ ТЕХНОЛОГИЧЕСКИЙ СТЕК**
 
-### **8.1. Техническая SEO-оптимизация "из коробки"**
+## **1.1. Фронтенд (ОБНОВЛЕНО)**
 
-#### **Автоматически реализуемые функции:**
-1. **Динамические мета-теги:**
-   - Каждая страница/товар/услуга имеет редактируемые через Next.js API:
-     - Title (шаблон: `{название} | ГриндерМастер`)
-     - Description (до 160 символов)
-     - Open Graph теги для соцсетей
-     - Twitter Card
+| Компонент | Технология | Версия | Назначение |
+|-----------|------------|--------|------------|
+| **Основной сайт** | Next.js | 15.x (App Router) | SSR/SSG, API Routes |
+| **Язык** | TypeScript | 5.x | Типизация |
+| **Стилизация** | Tailwind CSS | 4.x | Утилитарные стили |
+| **3D движок** | Three.js | 0.170+ | 3D рендеринг |
+| **3D React** | React Three Fiber | 8.x | Three.js для React |
+| **3D Утилиты** | React Three Drei | 9.x | Готовые 3D компоненты |
+| **Анимации** | GSAP | 3.x | Сложные анимации |
+| **Анимации UI** | Framer Motion | 11.x | Компонентные анимации |
+| **Состояние** | Zustand | 4.x | Глобальный стейт |
+| **Запросы** | TanStack Query | 5.x | Кэширование API |
+| **Формы** | React Hook Form | 7.x | Управление формами |
+| **Валидация** | Zod | 3.x | Валидация схем |
 
-2. **Семантическая разметка Schema.org:**
-   - **LocalBusiness** (офис, контакты, часы работы)
-   - **Product** для каждого гриндера (цена, описание, отзывы)
-   - **Service** для услуг ремонта (цена, описание)
-   - **BreadcrumbList** для навигации
-   - **Review** для отзывов
+## **1.2. Бэкенд (ОБНОВЛЕНО)**
 
-3. **Техническая оптимизация:**
-   - Автогенерация `sitemap.xml` с приоритетами
-   - `robots.txt` с правилами индексации
-   - Канонические URL для дублей
-   - 301 редиректы при изменении URL
-   - Lazy-load изображений и 3D моделей
-   - Минификация HTML/CSS/JS
+| Компонент | Технология | Версия | Назначение |
+|-----------|------------|--------|------------|
+| **API** | Next.js API Routes | 15.x | REST + Webhooks |
+| **ORM** | Prisma | 6.x | Работа с БД |
+| **База данных** | PostgreSQL | 16.x | Основная БД |
+| **Кэширование** | Redis | 7.x | Сессии, кэш |
+| **Аутентификация** | NextAuth.js (Auth.js) | 5.x | OAuth + JWT |
+| **Платежи** | CloudPayments / ЮKassa | API | Онлайн-оплата |
+| **Файлы** | AWS S3 / MinIO | - | Хранение медиа |
 
-4. **Скорость загрузки:**
-   - Lighthouse score > 90/100
-   - Оптимизация Core Web Vitals
-   - CDN для статики (через Vercel/Cloudflare)
+## **1.3. Админ-панель (ОБНОВЛЕНО)**
 
-### **8.2. Управление SEO через админ-панель React Admin**
+| Компонент | Технология | Версия | Назначение |
+|-----------|------------|--------|------------|
+| **Фреймворк** | React Admin | 4.x | Админ-интерфейс |
+| **Сборка** | Vite | 5.x | Быстрый билд |
+| **UI Kit** | React Admin RAUI | 4.x | Готовые компоненты |
+| **3D Превью** | @react-three/fiber | 8.x | 3D в админке |
 
-#### **SEO-модуль в React Admin:**
+## **1.4. Инфраструктура (ОБНОВЛЕНО)**
+
+| Компонент | Технология | Версия | Назначение |
+|-----------|------------|--------|------------|
+| **Контейнеризация** | Docker | 27.x | Изоляция |
+| **Оркестрация** | Docker Compose | 2.x | Локальное окружение |
+| **Балансировщик** | Nginx | 1.26+ | Reverse proxy |
+| **Frontend хостинг** | Vercel | - | SSR/SSG |
+| **Backend хостинг** | VPS (TimeWeb/Selectel) | - | API + БД |
+| **CDN** | Cloudflare | - | Кэш + защита |
+| **Мониторинг** | Sentry + UptimeRobot | - | Ошибки + uptime |
+
+## **1.5. OAuth Провайдеры**
+
+| Провайдер | Технология | Назначение |
+|-----------|------------|------------|
+| **Google** | OAuth 2.0 / OpenID Connect | Авторизация через Google |
+| **Яндекс** | OAuth 2.0 | Авторизация через Яндекс ID |
+| **Telegram** | Telegram Login Widget | Вход через Telegram |
+
+---
+
+# **ЧАСТЬ 2. ИНТЕРНЕТ-МАГАЗИН**
+
+## **2.1. Общая архитектура магазина**
+
+### **Основные сущности:**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│    Товары       │    │   Категории     │    │    Бренд        │
+│  - Простые      │    │  - Дерево       │    │  - Название     │
+│  - Конфигурируемые    │  - Фильтры      │    │  - Логотип      │
+│  - Комплектующие│    │  - SEO          │    │  - Описание     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+         ┌───────────────────────┼───────────────────────┐
+         │                       │                       │
+┌────────▼────────┐    ┌────────▼────────┐    ┌────────▼────────┐
+│    Корзина      │    │    Заказы       │    │   Избранное     │
+│  - Товары       │    │  - Статусы      │    │  - Товары       │
+│  - Промокоды    │    │  - Оплата       │    │  - Сохранение   │
+│  - Доставка     │    │  - Доставка     │    │  - Уведомления  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## **2.2. Каталог товаров**
+
+### **Типы товаров:**
+
+#### **1. Простые товары (Ready Products)**
+- Готовые модели гриндеров
+- Комплектующие (ремни, ролики, двигатели)
+- Расходные материалы (ленты, щётки)
+- Аксессуары (стойки, пылеотводы)
+
+#### **2. Конфигурируемые товары (Configurable Products)**
+- Гриндеры-конструкторы (собираются пользователем)
+- Наборы комплектующих
+- Кастомные модификации
+
+#### **3. Услуги**
+- Ремонт оборудования
+- Диагностика
+- Консультации
+
+### **Карточка товара (Product Card):**
+
+```typescript
+interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  type: 'simple' | 'configurable' | 'service';
+  
+  // Цена
+  basePrice: number;
+  salePrice?: number;
+  currency: 'RUB' | 'USD' | 'EUR';
+  
+  // Категоризация
+  categoryId: string;
+  brandId?: string;
+  tags: string[];
+  
+  // Характеристики (для фильтров)
+  attributes: {
+    power: number;        // кВт
+    voltage: number;      // В
+    weight: number;       // кг
+    dimensions: {         // габариты
+      length: number;
+      width: number;
+      height: number;
+    };
+    [key: string]: any;   // динамические атрибуты
+  };
+  
+  // Контент
+  images: ProductImage[];
+  video360?: string;
+  model3D?: {
+    url: string;          // .glb файл
+    thumbnail: string;
+  };
+  
+  // Конфигуратор (если применимо)
+  configOptions?: ConfigOption[];
+  
+  // Склад
+  stock: {
+    available: boolean;
+    quantity: number;
+    warehouse: string[];
+  };
+  
+  // SEO
+  seo: {
+    title: string;
+    description: string;
+    keywords: string[];
+  };
+  
+  // Статусы
+  status: 'active' | 'draft' | 'archived';
+  isFeatured: boolean;
+  isNew: boolean;
+  
+  // Мета
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### **Комплектующие (Components):**
+
+```typescript
+interface ProductComponent {
+  id: string;
+  name: string;
+  slug: string;
+  category: 'motor' | 'roller' | 'belt' | 'frame' | 'base' | 'accessory';
+  
+  // Совместимость
+  compatibleWith: string[];  // ID совместимых гриндеров
+  
+  // Характеристики
+  specifications: {
+    [key: string]: any;
+  };
+  
+  // Визуализация
+  model3D?: {
+    url: string;
+    position: [number, number, number];
+    rotation: [number, number, number];
+    scale: [number, number, number];
+  };
+  
+  // Цена и наличие
+  price: number;
+  stock: number;
+  
+  // Изображения
+  images: ProductImage[];
+}
+```
+
+## **2.3. Корзина и оформление заказа**
+
+### **Корзина (Shopping Cart):**
+
+```typescript
+interface Cart {
+  id: string;
+  userId?: string;          // Для авторизованных
+  sessionId: string;        // Для гостей
+  
+  items: CartItem[];
+  
+  // Промокоды
+  promoCode?: {
+    code: string;
+    discount: number;
+    type: 'percent' | 'fixed';
+  };
+  
+  // Доставка
+  shipping: {
+    method: 'pickup' | 'courier' | 'cdek' | 'boxberry' | 'pochta';
+    address?: string;
+    cost: number;
+    estimatedDays: number;
+  };
+  
+  // Итоги
+  totals: {
+    subtotal: number;
+    discount: number;
+    shipping: number;
+    total: number;
+  };
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface CartItem {
+  productId: string;
+  variantId?: string;       // Для конфигурируемых
+  configuration?: any;      // Выбранные опции конструктора
+  quantity: number;
+  price: number;
+  image: string;
+}
+```
+
+### **Функционал корзины:**
+- Добавление/удаление товаров
+- Изменение количества
+- Применение промокодов
+- Расчет стоимости доставки
+- Сохранение для позже
+- Быстрая покупка в 1 клик
+
+## **2.4. Система заказов**
+
+### **Статусы заказа:**
+
+```typescript
+enum OrderStatus {
+  PENDING = 'pending',              // Создан, ожидает оплаты
+  PAID = 'paid',                    // Оплачен
+  CONFIRMED = 'confirmed',          // Подтвержден менеджером
+  PROCESSING = 'processing',        // В обработке
+  ASSEMBLING = 'assembling',        // Сборка (для конструкторов)
+  READY_TO_SHIP = 'ready_to_ship',  // Готов к отправке
+  SHIPPED = 'shipped',              // Отправлен
+  DELIVERED = 'delivered',          // Доставлен
+  COMPLETED = 'completed',          // Завершен
+  CANCELLED = 'cancelled',          // Отменен
+  REFUNDED = 'refunded'             // Возврат
+}
+```
+
+### **Модель заказа:**
+
+```typescript
+interface Order {
+  id: string;
+  orderNumber: string;              // Человекочитаемый номер
+  
+  // Клиент
+  userId?: string;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  
+  // Товары
+  items: OrderItem[];
+  
+  // Оплата
+  payment: {
+    method: 'online' | 'cash' | 'invoice';
+    status: 'pending' | 'paid' | 'refunded';
+    transactionId?: string;
+    amount: number;
+    paidAt?: Date;
+  };
+  
+  // Доставка
+  shipping: {
+    method: string;
+    address: string;
+    cost: number;
+    trackingNumber?: string;
+  };
+  
+  // Статус
+  status: OrderStatus;
+  statusHistory: StatusChange[];
+  
+  // Комментарии
+  customerComment?: string;
+  managerComment?: string;
+  
+  // Мета
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+## **2.5. Онлайн-оплата**
+
+### **Поддерживаемые платежные системы:**
+
+| Система | Тип | Комиссия | Особенности |
+|---------|-----|----------|-------------|
+| **CloudPayments** | Эквайринг | 2.3-2.9% | Рекуррентные платежи |
+| **ЮKassa** | Эквайринг | 2.8-3.5% | Все популярные методы |
+| **Сбербанк Эквайринг** | Эквайринг | 2.3-3.0% | Для юрлиц |
+| **Тинькофф Касса** | Эквайринг | 2.4-3.3% | Быстрое подключение |
+
+### **Методы оплаты:**
+
+```typescript
+enum PaymentMethod {
+  CARD = 'card',                    // Банковская карта
+  SBP = 'sbp',                      // СБП (Система быстрых платежей)
+  YANDEX_PAY = 'yandex_pay',        // Яндекс Пэй
+  SBER_PAY = 'sber_pay',            // СберПэй
+  MIR_PAY = 'mir_pay',              // Mir Pay
+  CRYPTO = 'crypto',                // Криптовалюта (опционально)
+  INVOICE = 'invoice',              // Счёт для юрлиц
+  CASH = 'cash',                    // Наличные при получении
+  INSTALLMENTS = 'installments'     // Рассрочка/Кредит
+}
+```
+
+### **Процесс оплаты:**
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Оформление │───▶│  Выбор      │───▶│  Платежный  │
+│  заказа     │    │  оплаты     │    │  виджет     │
+└─────────────┘    └─────────────┘    └─────────────┘
+                                              │
+         ┌────────────────────────────────────┘
+         ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Уведомление│◀───│  Обработка  │◀───│  Подтвержде-│
+│  клиента    │    │  на сервере │    │  ние от ПС  │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
+
+### **Webhook обработчики:**
+
+```typescript
+// API Routes для платежных вебхуков
+/api/webhooks/cloudpayments
+/api/webhooks/yookassa
+/api/webhooks/sber
+```
+
+### **Функции оплаты:**
+- Предоплата 100% / 50% / 30%
+- Частичная оплата (для крупных заказов)
+- Рассрочка/Кредит (интеграция с банками)
+- Рекуррентные платежи (для подписок)
+- Возврат средств (полный/частичный)
+- Выставление счетов для юрлиц
+
+---
+
+# **ЧАСТЬ 3. 3D-КОНСТРУКТОР ГРИНДЕРОВ**
+
+## **3.1. Общая концепция**
+
+Конструктор позволяет пользователю собрать гриндер своей мечты из доступных компонентов с интерактивной 3D-визуализацией в реальном времени.
+
+### **Варианты реализации 3D-визуализации:**
+
+| Вариант | Технология | Плюсы | Минусы | Рекомендация |
+|---------|------------|-------|--------|--------------|
+| **1. Three.js + R3F** | React Three Fiber | Полный контроль, производительность | Требует 3D-моделлера | ✅ Основной |
+| **2. Spline** | Spline.design | Быстро, красиво | Платный для коммерции | Альтернатива |
+| **3. Babylon.js** | Babylon.js | Мощный, хорошая документация | Меньше комьюнити | Резерв |
+| **4. Model Viewer** | Google model-viewer | Простой, AR | Ограниченный функционал | Для мобильных |
+
+### **Рекомендуемая архитектура:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   3D Конструктор                        │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │   Панель    │  │   3D        │  │   Панель    │     │
+│  │   выбора    │  │   Сцена     │  │   свойств   │     │
+│  │   узлов     │  │   (Canvas)  │  │   узла      │     │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────┐   │
+│  │         Итоговая конфигурация и цена            │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+## **3.2. Структура конструктора**
+
+### **Узлы гриндера (Assembly Nodes):**
+
+```typescript
+interface GrinderAssembly {
+  id: string;
+  name: string;
+  slug: string;
+  
+  // Тип узла
+  nodeType: GrinderNodeType;
+  
+  // Опции для выбора
+  options: AssemblyOption[];
+  
+  // Обязательность
+  isRequired: boolean;
+  
+  // Зависимости
+  dependencies?: {
+    requires?: string[];      // Требуемые узлы
+    incompatibleWith?: string[]; // Несовместимые узлы
+  };
+  
+  // 3D привязки
+  mountPoints: MountPoint[];
+}
+
+enum GrinderNodeType {
+  BASE = 'base',              // Основание
+  FRAME = 'frame',            // Рама
+  MOTOR = 'motor',            // Двигатель
+  DRIVE_ROLLER = 'drive_roller',   // Ведущий ролик
+  IDLER_ROLLER = 'idler_roller',   // Ведомый ролик
+  TENSIONER = 'tensioner',    // Механизм натяжения
+  BELT = 'belt',              // Лента
+  GUARD = 'guard',            // Кожух
+  ACCESSORY = 'accessory'     // Дополнительно
+}
+
+interface AssemblyOption {
+  id: string;
+  componentId: string;        // Ссылка на компонент
+  name: string;
+  price: number;
+  priceDifference: number;    // Разница от базовой цены
+  
+  // 3D модель
+  model3D: {
+    url: string;
+    position: [number, number, number];
+    rotation: [number, number, number];
+    scale: [number, number, number];
+    material?: string;
+  };
+  
+  // Изображение
+  thumbnail: string;
+  
+  // Характеристики
+  specs: Record<string, any>;
+  
+  // Доступность
+  available: boolean;
+  leadTime?: number;          // Срок поставки (дни)
+}
+```
+
+### **Конфигурация гриндера:**
+
+```typescript
+interface GrinderConfiguration {
+  id: string;
+  name: string;               // Пользовательское название
+  
+  // Выбранные компоненты
+  selectedComponents: {
+    [nodeType: string]: string;  // nodeType -> optionId
+  };
+  
+  // Расчетная цена
+  pricing: {
+    basePrice: number;
+    componentsTotal: number;
+    discount: number;
+    total: number;
+  };
+  
+  // 3D сцена (сериализованная)
+  scene3D: {
+    camera: {
+      position: [number, number, number];
+      target: [number, number, number];
+    };
+    lighting: any;
+    environment: string;
+  };
+  
+  // Мета
+  createdAt: Date;
+  updatedAt: Date;
+  
+  // Для сохранения
+  userId?: string;
+  isPublic: boolean;
+  isPreset: boolean;        // Предустановленная конфигурация
+}
+```
+
+## **3.3. 3D Сцена и визуализация**
+
+### **Детальная спецификация анимаций конструктора**
+
+Анимации должны быть **физически точными** и имитировать реальный процесс сборки/разборки гриндера.
+
+---
+
+### **Типы анимаций компонентов:**
+
+#### **1. Анимация ОТВИНЧИВАНИЯ (Unscrew Animation)**
+
+```typescript
+interface UnscrewAnimation {
+  // Этап 1: Вибрация/подготовка
+  preparation: {
+    type: 'vibration';
+    duration: 200;        // мс
+    amplitude: 0.5;       // амплитуда вибрации (мм)
+    frequency: 30;        // Гц
+  };
+  
+  // Этап 2: Вращение крепёжного элемента
+  rotation: {
+    type: 'bolt_rotation';
+    direction: 'counter-clockwise';
+    rotations: 3;         // полных оборота
+    duration: 600;        // мс
+    easing: 'ease-in-out';
+  };
+  
+  // Этап 3: Ослабление крепления
+  loosening: {
+    type: 'bolt_lift';
+    distance: 10;         // мм подъёма
+    duration: 300;        // мс
+    easing: 'ease-out';
+  };
+  
+  // Звуковые эффекты (опционально)
+  sound?: {
+    unscrew: string;      // путь к звуку
+    volume: number;
+  };
+}
+```
+
+**Визуальное описание:**
+- Болт/винт начинает вращаться против часовой стрелки
+- Видна резьба, постепенно выходящая из отверстия
+- После полного выкручивания болт приподнимается
+- Под болтом видна шайба (если есть)
+- Компонент становится "свободным" (подсвечивается)
+
+---
+
+#### **2. Анимация УДАЛЕНИЯ компонента (Remove Animation)**
+
+```typescript
+interface RemoveAnimation {
+  // Этап 1: Отсоединение от точки крепления
+  detach: {
+    type: 'separation';
+    direction: 'normal_to_surface';  // перпендикулярно поверхности
+    distance: 20;                    // мм
+    duration: 400;                   // мс
+    easing: 'ease-in';
+  };
+  
+  // Этап 2: Перемещение за край экрана
+  flyOut: {
+    type: 'fly_to_edge';
+    edge: 'top' | 'right' | 'bottom' | 'left';
+    trajectory: 'arc' | 'straight';
+    rotation: {
+      enabled: boolean;
+      axis: 'x' | 'y' | 'z';
+      degrees: 45;
+    };
+    scale: {
+      start: 1.0;
+      end: 0.3;           // уменьшается при удалении
+    };
+    duration: 800;        // мс
+    easing: 'ease-in-back';
+  };
+  
+  // Этап 3: Исчезновение (fade out)
+  fadeOut: {
+    type: 'opacity';
+    from: 1.0;
+    to: 0.0;
+    duration: 200;        // мс
+  };
+  
+  // Следы крепления (опционально)
+  mountMarks?: {
+    show: boolean;
+    duration: 1000;       // показывать следы 1 сек
+    fadeOut: true;
+  };
+}
+```
+
+**Визуальное описание:**
+- Компонент плавно отсоединяется от места крепления
+- Видны отверстия/крепления на основном корпусе
+- Компонент начинает движение к краю экрана по дуге
+- При движении компонент вращается и уменьшается
+- За компонентом может оставаться лёгкий "шлейф" (motion trail)
+- У края экрана компонент исчезает (fade out)
+
+---
+
+#### **3. Анимация ДОБАВЛЕНИЯ компонента (Add Animation)**
+
+```typescript
+interface AddAnimation {
+  // Этап 1: Появление из-за края экрана
+  flyIn: {
+    type: 'fly_from_edge';
+    edge: 'top' | 'right' | 'bottom' | 'left';
+    trajectory: 'arc' | 'straight';
+    rotation: {
+      enabled: boolean;
+      axis: 'x' | 'y' | 'z';
+      degrees: -45;       // обратное вращение
+    };
+    scale: {
+      start: 0.3;         // маленький у края
+      end: 1.0;           // нормальный размер у позиции
+    };
+    duration: 800;        // мс
+    easing: 'ease-out-back';
+  };
+  
+  // Этап 2: Позиционирование над точкой крепления
+  position: {
+    type: 'hover_above';
+    offset: 20;           // мм над точкой
+    duration: 300;        // мс
+    easing: 'ease-out';
+    alignment: {
+      enabled: boolean;
+      snapThreshold: 2;   // мм
+      visualGuide: true;  // показать направляющие
+    };
+  };
+  
+  // Этап 3: Опускание на место
+  descend: {
+    type: 'lower_to_mount';
+    distance: 20;         // мм
+    duration: 400;        // мс
+    easing: 'ease-in';
+    rotation: {
+      enabled: boolean;   // поиск правильного положения
+      maxDegrees: 15;
+      direction: 'both';
+    };
+  };
+  
+  // Этап 4: "Примагничивание" к позиции
+  snap: {
+    type: 'snap_to_place';
+    distance: 3;          // мм финальное движение
+    duration: 150;        // мс
+    easing: 'ease-out';
+    sound?: string;       // щелчок
+  };
+}
+```
+
+**Визуальное описание:**
+- Компонент появляется из-за края экрана
+- Летит по дуге к месту установки, вращаясь
+- Увеличивается до нормального размера
+- Над точкой крепления замедляется
+- Начинает медленно опускаться, слегка покачиваясь (поиск позиции)
+- При приближении к отверстию "примагничивается" (snap)
+- Видна вспышка/подсветка в месте контакта
+
+---
+
+#### **4. Анимация ПРИВИНЧИВАНИЯ (Screw Animation)**
+
+```typescript
+interface ScrewAnimation {
+  // Этап 1: Позиционирование крепёжного элемента
+  positionBolt: {
+    type: 'bolt_appear';
+    method: 'fade_in' | 'fly_in';
+    position: 'above_hole';
+    offset: 5;            // мм над отверстием
+    duration: 200;        // мс
+  };
+  
+  // Этап 2: Опускание в отверстие
+  insert: {
+    type: 'bolt_insert';
+    distance: 5;          // мм
+    duration: 200;        // мс
+    easing: 'ease-in';
+    alignment: {
+      auto: boolean;      // автовыравнивание по оси
+      visual: true;       // показать ось
+    };
+  };
+  
+  // Этап 3: Вращение при закручивании
+  tightening: {
+    type: 'bolt_rotation';
+    direction: 'clockwise';
+    rotations: 3;         // полных оборота
+    duration: 600;        // мс
+    easing: 'ease-in-out';
+    // Визуальный эффект ввинчивания
+    verticalMovement: {
+      enabled: true;
+      distance: 8;        // мм погружения
+      synchronized: true; // синхронно с вращением
+    };
+  };
+  
+  // Этап 4: Финальная затяжка
+  finalTighten: {
+    type: 'final_torque';
+    rotation: 30;         // градусов
+    duration: 150;        // мс
+    sound?: string;       // финальный щелчок
+    vibration?: number;   // мс вибрации
+  };
+}
+```
+
+**Визуальное описание:**
+- Болт появляется над отверстием (или прилетает)
+- Опускается в отверстие (видна центровка)
+- Начинает вращаться по часовой стрелке
+- Одновременно с вращением погружается в отверстие
+- Видна резьба, постепенно скрывающаяся
+- Финальная затяжка с небольшим усилием (визуально)
+- Щелчок/звук в конце
+
+---
+
+#### **5. Анимация ЗАМЕНЫ компонента (Replace Animation)**
+
+```typescript
+interface ReplaceAnimation {
+  // Двухэтапная анимация: удаление старого + добавление нового
+  
+  // Этап A: Удаление старого компонента
+  removeOld: {
+    unscrew: UnscrewAnimation;
+    remove: RemoveAnimation;
+    parallel: false;      // последовательно
+  };
+  
+  // Пауза между удалением и добавлением
+  pause: {
+    duration: 300;        // мс
+  };
+  
+  // Этап B: Добавление нового компонента
+  addNew: {
+    add: AddAnimation;
+    screw: ScrewAnimation;
+    parallel: false;      // последовательно
+  };
+  
+  // Общая длительность
+  totalDuration: 3000;    // мс (примерно)
+  
+  // Плавность перехода
+  transition: {
+    type: 'crossfade' | 'morph';
+    highlight: boolean;   // подсветка места замены
+  };
+}
+```
+
+**Визуальное описание:**
+- Старый компонент отвинчивается и улетает
+- Краткая пауза (акцент на пустом месте крепления)
+- Новый компонент прилетает и привинчивается
+- Место крепления подсвечивается во время всей анимации
+
+---
+
+### **Общие требования к анимациям:**
+
+```typescript
+interface AnimationRequirements {
+  // Производительность
+  performance: {
+    targetFPS: 60;
+    maxDuration: 5000;    // мс (макс. длительность)
+    minDuration: 100;     // мс (мин. длительность)
+    interpolation: 'linear' | 'spline';
+  };
+  
+  // Физическая точность
+  physics: {
+    accurateThreads: boolean;     // точная резьба
+    realisticMotion: boolean;     // реалистичное движение
+    collisionDetection: boolean;  // обнаружение столкновений
+    gravity: boolean;             // гравитация (для падающих болтов)
+  };
+  
+  // Визуальные эффекты
+  effects: {
+    motionBlur: boolean;          // размытие в движении
+    depthOfField: boolean;        // глубина резкости
+    ambientOcclusion: boolean;    // затенение
+    highlights: boolean;          // подсветка активных зон
+    shadows: boolean;             // тени
+  };
+  
+  // Доступность
+  accessibility: {
+    reducedMotion: boolean;       // режим для prefers-reduced-motion
+    skipAnimation: boolean;       // возможность пропуска
+    duration: 'short' | 'normal' | 'long';
+  };
+}
+```
+
+---
+
+### **Компоненты 3D сцены:**
+
+```typescript
+// Основная сцена конструктора
+interface Scene3D {
+  // Камера
+  camera: {
+    type: 'perspective' | 'orthographic';
+    fov: number;
+    near: number;
+    far: number;
+    position: Vector3;
+    target: Vector3;
+  };
+  
+  // Освещение
+  lighting: {
+    ambient: AmbientLight;
+    directional: DirectionalLight[];
+    point: PointLight[];
+    hdri?: string;          // HDRI окружение
+  };
+  
+  // Окружение
+  environment: {
+    type: 'studio' | 'workshop' | 'plain';
+    background: string | Color;
+    floor?: {
+      enabled: boolean;
+      texture: string;
+      reflection: number;
+    };
+  };
+  
+  // Пост-процессинг
+  postProcessing: {
+    bloom: boolean;
+    ssao: boolean;
+    fxaa: boolean;
+    toneMapping: string;
+  };
+}
+```
+
+### **Анимации компонентов:**
+
+```typescript
+interface ComponentAnimation {
+  // Анимация появления
+  appear: {
+    type: 'fade' | 'slide' | 'scale' | 'explode';
+    duration: number;
+    easing: string;
+    delay?: number;
+  };
+  
+  // Анимация исчезновения
+  disappear: {
+    type: 'fade' | 'slide' | 'scale' | 'explode';
+    duration: number;
+    easing: string;
+  };
+  
+  // Анимация замены
+  replace: {
+    type: 'morph' | 'crossfade' | 'slide';
+    duration: number;
+  };
+  
+  // Интерактивные анимации
+  interactive: {
+    hover: AnimationConfig;
+    click: AnimationConfig;
+    rotate: AnimationConfig;
+  };
+}
+```
+
+### **Варианты анимации:**
+
+| Событие | Тип анимации | Длительность | Easing |
+|---------|--------------|--------------|--------|
+| **Добавление компонента** | Slide + Fade | 400ms | ease-out |
+| **Удаление компонента** | Fade + Scale | 300ms | ease-in |
+| **Замена компонента** | Crossfade | 500ms | ease-in-out |
+| **Вращение камеры** | Spherical lerp | 600ms | smooth |
+| **Взрыв-схема** | Explode view | 800ms | elastic |
+
+## **3.4. Интерактивность**
+
+### **Управление камерой:**
+
+```typescript
+interface CameraControls {
+  // Вращение
+  orbit: {
+    enabled: boolean;
+    minPolarAngle: number;
+    maxPolarAngle: number;
+    minAzimuthAngle: number;
+    maxAzimuthAngle: number;
+  };
+  
+  // Zoom
+  zoom: {
+    enabled: boolean;
+    min: number;
+    max: number;
+  };
+  
+  // Панорамирование
+  pan: {
+    enabled: boolean;
+  };
+  
+  // Пресеты видов
+  presets: {
+    front: CameraPreset;
+    side: CameraPreset;
+    top: CameraPreset;
+    isometric: CameraPreset;
+    exploded: CameraPreset;
+  };
+}
+```
+
+### **Интерактивные элементы:**
+
+```typescript
+interface InteractiveElements {
+  // Выделение компонентов
+  highlight: {
+    onHover: boolean;
+    color: string;
+    opacity: number;
+  };
+  
+  // Клик по компоненту
+  onClick: {
+    selectComponent: boolean;
+    showInfo: boolean;
+    showOptions: boolean;
+  };
+  
+  // Drag & Drop
+  dragDrop: {
+    enabled: boolean;
+    snapToMount: boolean;
+    ghostOpacity: number;
+  };
+  
+  // Контекстное меню
+  contextMenu: {
+    enabled: boolean;
+    items: ContextMenuItem[];
+  };
+}
+```
+
+## **3.5. Пресеты и шаблоны**
+
+### **Готовые конфигурации:**
+
+```typescript
+interface GrinderPreset {
+  id: string;
+  name: string;
+  slug: string;
+  
+  // Описание
+  description: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  
+  // Конфигурация
+  configuration: GrinderConfiguration;
+  
+  // Визуализация
+  thumbnail: string;
+  gallery: string[];
+  videoPreview?: string;
+  
+  // Цена
+  price: number;
+  
+  // Популярность
+  isPopular: boolean;
+  isFeatured: boolean;
+  rating: number;
+  
+  // Для кого
+  targetAudience: string[];
+}
+```
+
+## **3.6. Экспорт и сохранение**
+
+### **Варианты экспорта:**
+
+```typescript
+interface ExportOptions {
+  // Форматы
+  formats: {
+    image: {
+      png: boolean;
+      jpg: boolean;
+      webp: boolean;
+    };
+    model: {
+      glb: boolean;
+      gltf: boolean;
+      obj: boolean;
+    };
+    document: {
+      pdf: boolean;       // Спецификация
+      json: boolean;      // Конфигурация
+    };
+  };
+  
+  // Настройки рендера
+  render: {
+    resolution: '1080p' | '4K' | '8K';
+    antialias: boolean;
+    shadows: boolean;
+    reflections: boolean;
+  };
+  
+  // 360° тур
+  tour360: {
+    enabled: boolean;
+    frames: number;
+    format: 'gif' | 'mp4';
+  };
+}
+```
+
+### **Сохранение конфигурации:**
+
+```typescript
+interface SaveConfiguration {
+  // Для авторизованных
+  saveToAccount: boolean;
+  name: string;
+  isPublic: boolean;
+  
+  // Поделиться
+  share: {
+    generateLink: boolean;
+    allowClone: boolean;
+    allowPurchase: boolean;
+  };
+  
+  // Экспорт
+  export: ExportOptions;
+}
+```
+
+## **3.7. Производительность и оптимизация**
+
+### **LOD (Level of Detail):**
+
+```typescript
+interface LODConfig {
+  levels: {
+    high: {
+      distance: 0;          // 0-5 метров
+      triangles: number;    // Полное качество
+      textures: number;     // 2K+
+    };
+    medium: {
+      distance: 5;          // 5-15 метров
+      triangles: number;    // 50%
+      textures: number;     // 1K
+    };
+    low: {
+      distance: 15;         // 15+ метров
+      triangles: number;    // 25%
+      textures: number;     // 512px
+    };
+  };
+}
+```
+
+### **Оптимизация для мобильных:**
+
+```typescript
+interface MobileOptimization {
+  // Упрощение сцены
+  simplified: {
+    reduceLights: boolean;
+    disableShadows: boolean;
+    lowerResolution: boolean;
+  };
+  
+  // Управление
+  touchControls: {
+    oneFingerRotate: boolean;
+    twoFingerZoom: boolean;
+    tapSelect: boolean;
+  };
+  
+  // Производительность
+  performance: {
+    targetFPS: number;
+    maxDrawCalls: number;
+    maxTextures: number;
+  };
+}
+```
+
+---
+
+# **ЧАСТЬ 4. АВТОРИЗАЦИЯ И ПОЛЬЗОВАТЕЛИ**
+
+## **4.1. Система аутентификации**
+
+### **Поддерживаемые методы входа:**
+
+```typescript
+enum AuthMethod {
+  EMAIL_PASSWORD = 'email_password',    // Email + пароль
+  GOOGLE = 'google',                     // Google OAuth
+  YANDEX = 'yandex',                     // Яндекс OAuth
+  TELEGRAM = 'telegram',                 // Telegram Login
+  PHONE_SMS = 'phone_sms',               // Телефон + SMS (опционально)
+  GUEST = 'guest'                        // Гостевой режим
+}
+```
+
+### **Модель пользователя:**
+
+```typescript
+interface User {
+  id: string;
+  
+  // Профиль
+  email?: string;
+  phone?: string;
+  name: string;
+  avatar?: string;
+  
+  // OAuth провайдеры
+  providers: {
+    google?: {
+      id: string;
+      email: string;
+      connectedAt: Date;
+    };
+    yandex?: {
+      id: string;
+      email: string;
+      connectedAt: Date;
+    };
+    telegram?: {
+      id: number;
+      username: string;
+      connectedAt: Date;
+    };
+  };
+  
+  // Роли
+  role: UserRole;
+  
+  // Предпочтения
+  preferences: {
+    language: 'ru' | 'en';
+    currency: 'RUB' | 'USD' | 'EUR';
+    notifications: NotificationSettings;
+  };
+  
+  // Контакты для связи
+  contactPreferences: {
+    telegram?: string;
+    whatsapp?: string;
+    email?: string;
+    phone?: string;
+    preferredMethod: 'telegram' | 'whatsapp' | 'email' | 'phone';
+  };
+  
+  // Мета
+  createdAt: Date;
+  lastLoginAt: Date;
+}
+
+enum UserRole {
+  CUSTOMER = 'customer',      // Покупатель
+  MANAGER = 'manager',        // Менеджер
+  ADMIN = 'admin'             // Администратор
+}
+```
+
+## **4.2. OAuth интеграции**
+
+### **Google OAuth 2.0:**
+
+```typescript
+// Конфигурация NextAuth
+const googleProvider = GoogleProvider({
+  clientId: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  authorization: {
+    params: {
+      scope: 'openid email profile',
+      prompt: 'select_account',
+    },
+  },
+});
+```
+
+### **Яндекс OAuth 2.0:**
+
+```typescript
+const yandexProvider = YandexProvider({
+  clientId: process.env.YANDEX_CLIENT_ID,
+  clientSecret: process.env.YANDEX_CLIENT_SECRET,
+  authorization: {
+    params: {
+      scope: 'login:email login:info login:avatar',
+    },
+  },
+});
+```
+
+### **Telegram Login:**
+
+```typescript
+// Telegram Login Widget
+const telegramProvider = TelegramProvider({
+  botToken: process.env.TELEGRAM_BOT_TOKEN,
+  botUsername: process.env.TELEGRAM_BOT_USERNAME,
+});
+```
+
+## **4.3. История активности пользователя**
+
+### **История просмотров:**
+
+```typescript
+interface ViewHistory {
+  id: string;
+  userId: string;
+  
+  // Что просмотрено
+  entityType: 'product' | 'category' | 'configurator';
+  entityId: string;
+  
+  // Детали
+  duration: number;         // Время просмотра (мс)
+  referrer?: string;
+  
+  // Контекст
+  device: 'desktop' | 'mobile' | 'tablet';
+  sessionId: string;
+  
+  createdAt: Date;
+}
+```
+
+### **История заказов:**
+
+```typescript
+interface OrderHistory {
+  userId: string;
+  orders: Order[];
+  
+  // Статистика
+  stats: {
+    totalOrders: number;
+    totalSpent: number;
+    averageOrderValue: number;
+    firstOrderDate: Date;
+    lastOrderDate: Date;
+  };
+  
+  // Избранное
+  favorites: string[];      // IDs товаров
+  
+  // Сохраненные конфигурации
+  savedConfigurations: GrinderConfiguration[];
+}
+```
+
+### **Аналитика поведения:**
+
+```typescript
+interface UserAnalytics {
+  userId: string;
+  
+  // Активность
+  sessions: {
+    total: number;
+    averageDuration: number;
+    lastSession: Date;
+  };
+  
+  // Интересы
+  interests: {
+    categories: string[];
+    brands: string[];
+    priceRange: {
+      min: number;
+      max: number;
+    };
+  };
+  
+  // Конверсии
+  conversions: {
+    viewedToCart: number;
+    cartToOrder: number;
+    configuratorUsage: number;
+  };
+}
+```
+
+---
+
+# **ЧАСТЬ 5. ЗАКАЗЫ ЧЕРЕЗ МЕНЕДЖЕРА**
+
+## **5.1. Каналы связи**
+
+### **Варианты заказа через менеджера:**
+
+```typescript
+enum ManagerContactMethod {
+  TELEGRAM_MESSAGE = 'telegram_message',   // Сообщение в Telegram
+  TELEGRAM_CALL = 'telegram_call',         // Звонок через Telegram
+  WHATSAPP = 'whatsapp',                   // WhatsApp сообщение
+  PHONE_CALL = 'phone_call',               // Обычный звонок
+  EMAIL = 'email',                         // Email
+  CALLBACK_REQUEST = 'callback_request',   // Запрос обратного звонка
+}
+```
+
+### **Форма связи с менеджером:**
+
+```typescript
+interface ManagerContactForm {
+  // Контактные данные
+  contactMethod: ManagerContactMethod;
+  contactValue: string;         // Telegram username, phone, email
+  
+  // Тип обращения
+  inquiryType: 'order' | 'consultation' | 'support' | 'custom';
+  
+  // Детали
+  subject?: string;
+  message: string;
+  
+  // Прикрепленные файлы
+  attachments?: {
+    type: 'image' | 'document';
+    url: string;
+  }[];
+  
+  // Связанные сущности
+  relatedTo?: {
+    type: 'product' | 'order' | 'configuration';
+    id: string;
+  };
+  
+  // Предпочтительное время
+  preferredTime?: {
+    date: Date;
+    timeFrom: string;
+    timeTo: string;
+  };
+  
+  // Срочность
+  urgency: 'low' | 'normal' | 'high';
+}
+```
+
+## **5.2. Интеграция с Telegram**
+
+### **Telegram Bot для заказов:**
+
+```typescript
+interface TelegramBotConfig {
+  token: string;
+  webhookUrl: string;
+  
+  // Команды
+  commands: {
+    '/start': 'Приветствие и меню',
+    '/catalog': 'Показать каталог',
+    '/configurator': 'Открыть конструктор',
+    '/order': 'Статус заказа',
+    '/support': 'Связаться с поддержкой',
+  };
+  
+  // Уведомления
+  notifications: {
+    newOrder: boolean;
+    orderStatusChange: boolean;
+    paymentConfirmation: boolean;
+  };
+}
+```
+
+### **Отправка заказа в Telegram:**
+
+```typescript
+// Формат сообщения менеджеру
+interface TelegramOrderMessage {
+  // Заголовок
+  title: string;
+  
+  // Данные клиента
+  customer: {
+    name: string;
+    contact: string;
+    userId?: string;
+  };
+  
+  // Заказ
+  order: {
+    number: string;
+    items: string;
+    total: number;
+    paymentMethod: string;
+    shippingMethod: string;
+  };
+  
+  // Сообщение
+  message?: string;
+  
+  // Кнопки действий
+  actions: {
+    accept: string;
+    call: string;
+    message: string;
+  };
+}
+```
+
+## **5.3. Обработка обращений**
+
+### **Статусы обращения:**
+
+```typescript
+enum InquiryStatus {
+  NEW = 'new',                  // Новое
+  IN_PROGRESS = 'in_progress',  // В работе
+  WAITING_CUSTOMER = 'waiting_customer', // Ожидает клиента
+  RESOLVED = 'resolved',        // Решено
+  CLOSED = 'closed'             // Закрыто
+}
+```
+
+### **Модель обращения:**
+
+```typescript
+interface CustomerInquiry {
+  id: string;
+  ticketNumber: string;
+  
+  // Клиент
+  userId?: string;
+  customer: {
+    name: string;
+    contact: string;
+    contactMethod: ManagerContactMethod;
+  };
+  
+  // Обращение
+  type: string;
+  subject: string;
+  message: string;
+  status: InquiryStatus;
+  
+  // Назначение
+  assignedTo?: string;          // ID менеджера
+  
+  // Переписка
+  messages: InquiryMessage[];
+  
+  // Мета
+  createdAt: Date;
+  resolvedAt?: Date;
+}
+```
+
+---
+
+# **ЧАСТЬ 6. АДМИН-ПАНЕЛЬ (РАСШИРЕННАЯ)**
+
+## **6.1. Новые модули админки**
+
+### **Модуль магазина:**
+
 ```yaml
-SEO Управление:
-  - Поля для каждой сущности:
-    1. SEO Title (переопределяет автоматический)
-    2. SEO Description
-    3. SEO Keywords (скрытые, для внутреннего использования)
-    4. ЧПУ (slug) с валидацией уникальности
-    5. Мета-robots (noindex, nofollow)
-    6. Open Graph изображение (отдельное от основного)
+Магазин:
+  ├── Товары
+  │   ├── Каталог товаров
+  │   ├── Добавить товар
+  │   ├── Категории
+  │   ├── Бренды
+  │   └── Атрибуты
+  ├── Комплектующие
+  │   ├── Каталог комплектующих
+  │   ├── Типы комплектующих
+  │   └── Совместимость
+  ├── Заказы
+  │   ├── Все заказы
+  │   ├── Новые заказы
+  │   ├── В обработке
+  │   └── Архив
+  ├── Оплата
+  │   ├── Платежные системы
+  │   ├── Транзакции
+  │   └── Возвраты
+  ├── Доставка
+  │   ├── Методы доставки
+  │   ├── Тарифы
+  │   └── Интеграции (СДЭК, BoxBerry)
+  ├── Промокоды
+  │   ├── Список промокодов
+  │   └── Создать промокод
+  └── Отзывы о товарах
+      ├── Модерация
+      └── Ответы
+```
+
+### **Модуль конструктора:**
+
+```yaml
+Конструктор:
+  ├── Конфигурация гриндера
+  │   ├── Узлы и компоненты
+  │   ├── Пресеты конфигураций
+  │   └── Правила совместимости
+  ├── 3D Настройки
+  │   ├── Модели компонентов
+  │   ├── Точки крепления
+  │   ├── Анимации
+  │   └── Сцены и окружение
+  ├── Цены
+  │   ├── Базовые цены
+  │   ├── Наценки за компоненты
+  │   └── Скидки за конфигурации
+  └── Аналитика
+      ├── Популярные конфигурации
+      ├── Конверсия конструктора
+      └── Сохраненные проекты
+```
+
+### **Модуль пользователей:**
+
+```yaml
+Пользователи:
+  ├── Список пользователей
+  ├── OAuth подключения
+  │   ├── Google
+  │   ├── Яндекс
+  │   └── Telegram
+  ├── Сегменты
+  │   ├── Новые пользователи
+  │   ├── Постоянные клиенты
+  │   └── VIP клиенты
+  ├── История активности
+  │   ├── Просмотры
+  │   ├── Заказы
+  │   └── Обращения
+  └── Рассылки
+      ├── Email рассылки
+      ├── Telegram рассылки
+      └── Push уведомления
+```
+
+### **Модуль обращений:**
+
+```yaml
+Обращения:
+  ├── Все обращения
+  ├── Новые
+  ├── В работе
+  ├── Назначения менеджерам
+  ├── Шаблоны ответов
+  └── Настройки Telegram
+      ├── Bot Token
+      ├── Webhook
+      └── Уведомления
+```
+
+## **6.1.5. Централизованное управление конфигурацией**
+
+### **Концепция многоуровневого управления:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Уровень 1: Админ-панель                                │
+│  • Оперативные настройки (товары, заказы, контент)      │
+│  • Изменения в реальном времени                         │
+│  • Требует авторизации                                  │
+└─────────────────────────────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  Уровень 2: Конфигурационный файл (config.admin.yml)   │
+│  • Технические настройки проекта                        │
+│  • Настройки окружений (dev/test/prod)                 │
+│  • Порты, хосты, URL                                    │
+│  • Интеграции (Telegram, SMTP, БД)                      │
+│  • Политики безопасности                                │
+│  • Резервное копирование                                │
+│  • Мониторинг и алерты                                  │
+└─────────────────────────────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  Уровень 3: Переменные окружения (.env)                │
+│  • Чувствительные данные (секреты, пароли)             │
+│  • Индивидуальные настройки разработчика                │
+│  • Production секреты                                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Структура config.admin.yml:**
+
+```yaml
+# Единый конфигурационный файл проекта
+project:
+  name: "GrinderMaster"
+  version: "1.0.0"
+  environment: "development"  # development/testing/production
+
+# Порты сервисов
+ports:
+  frontend:
+    development: 3002
+    testing: 80
+    production: 3002
+  api:
+    docker: 3004
+    external: 3000
+  admin: 3001
+  database:
+    postgresql: 5432
+    redis: 6379
+
+# URL для окружений
+hosts:
+  development:
+    frontend: "http://localhost:3002"
+    api: "http://localhost:3004"
+    admin: "http://localhost:3001"
+  production:
+    frontend: "${PRODUCTION_FRONTEND_URL}"
+    api: "${PRODUCTION_API_URL}"
+    admin: "${PRODUCTION_ADMIN_URL}"
+
+# Настройки админки
+admin:
+  authentication:
+    type: "jwt"
+    secret: "${JWT_SECRET}"
+    expiresIn: "24h"
+  security:
+    ipWhitelist:
+      development: ["127.0.0.1", "localhost"]
+      production: ["${PRODUCTION_ADMIN_IP}"]
+    rateLimit:
+      requests: 1000
+      window: "1h"
+
+# Настройки API
+api:
+  database:
+    url: "${DATABASE_URL}"
+    pool:
+      min: 2
+      max: 10
+  redis:
+    url: "${REDIS_URL}"
+    keyPrefix: "grindermaster:"
+    ttl:
+      default: 3600
+
+# Деплой
+deployment:
+  development:
+    command: "docker compose up -d"
+  production:
+    command: "docker compose --profile production up -d"
+    ssl: true
+
+# Мониторинг
+monitoring:
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+  alerts:
+    email: "${SMTP_USER}"
+    telegram: "${TELEGRAM_CHAT_ID}"
+    thresholds:
+      cpu: 80
+      memory: 85
+      disk: 90
+
+# Бэкапы
+backup:
+  database:
+    enabled: true
+    schedule: "0 2 * * *"
+    retention: 30
+  files:
+    enabled: true
+    schedule: "0 3 * * 0"
+    retention: 7
+
+# Уведомления
+notifications:
+  telegram:
+    botToken: "${TELEGRAM_BOT_TOKEN}"
+    chatId: "${TELEGRAM_CHAT_ID}"
+    enabled: true
+  email:
+    smtp:
+      host: "${SMTP_HOST}"
+      port: 587
+      auth:
+        user: "${SMTP_USER}"
+        pass: "${SMTP_PASS}"
+
+# SEO
+seo:
+  default:
+    title: "ГриндерМастер - Профессиональное оборудование"
+    description: "Продажа и ремонт гриндеров"
+  openGraph:
+    type: "website"
+    locale: "ru_RU"
+```
+
+### **Использование конфигурации:**
+
+```typescript
+// Загрузка конфигурации
+import yaml from 'js-yaml';
+import fs from 'fs';
+import dotenv from 'dotenv';
+
+// Сначала загружаем .env переменные
+dotenv.config();
+
+// Затем загружаем YAML конфиг
+const config = yaml.load(
+  fs.readFileSync('config.admin.yml', 'utf8'),
+  { 
+    schema: yaml.JSON_SCHEMA 
+  }
+);
+
+// Функция для подстановки переменных окружения
+function interpolateConfig(value: string): string {
+  return value.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
+    return process.env[envVar] || value;
+  });
+}
+
+// Рекурсивная обработка всего конфига
+function processConfig(obj: any): any {
+  if (typeof obj === 'string') {
+    return interpolateConfig(obj);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(processConfig);
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    return Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [k, processConfig(v)])
+    );
+  }
+  return obj;
+}
+
+const finalConfig = processConfig(config);
+
+// Использование
+const apiPort = finalConfig.ports.api.docker;
+const adminUrl = finalConfig.hosts.development.admin;
+```
+
+### **Преимущества централизованного конфига:**
+
+| Аспект | Без конфига | С конфигом |
+|--------|-------------|-----------|
+| **Управление** | Разбросано по .env | Единый файл |
+| **Окружения** | Дублирование .env | Секции в YAML |
+| **Валидация** | Ручная | Автоматическая (схема) |
+| **Документация** | Отдельно | Встроенная в YAML |
+| **Версионирование** | .env в .gitignore | config в Git |
+| **Безопасность** | Секреты в .env | Секреты в .env, конфиг в YAML |
+
+### **Валидация конфигурации:**
+
+```typescript
+import { z } from 'zod';
+
+// Схема валидации
+const ConfigSchema = z.object({
+  project: z.object({
+    name: z.string(),
+    version: z.string(),
+    environment: z.enum(['development', 'testing', 'production'])
+  }),
+  ports: z.object({
+    frontend: z.object({
+      development: z.number(),
+      testing: z.number(),
+      production: z.number()
+    }),
+    api: z.object({
+      docker: z.number(),
+      external: z.number()
+    })
+  }),
+  // ... другие секции
+});
+
+// Валидация при загрузке
+const result = ConfigSchema.safeParse(config);
+if (!result.success) {
+  console.error('Ошибка валидации конфигурации:', result.error);
+  process.exit(1);
+}
+```
+
+### **Интеграция с админкой:**
+
+```typescript
+// API для чтения конфига (только admin)
+GET /api/admin/config          // Получить текущую конфигурацию
+PUT /api/admin/config          // Обновить конфигурацию
+POST /api/admin/config/validate // Валидировать конфигурацию
+
+// Админка отображает:
+• Текущие настройки (read-only из YAML)
+• Возможность редактирования (с сохранением в YAML)
+• Валидацию перед сохранением
+• Историю изменений (Git commits)
+```
+
+### **Безопасность:**
+
+```yaml
+# Чувствительные данные ТОЛЬКО в .env:
+# .env (не добавлять в Git!)
+JWT_SECRET=your-secret-key
+DATABASE_URL=postgresql://user:password@host:5432/db
+TELEGRAM_BOT_TOKEN=bot-token
+SMTP_PASS=email-password
+
+# config.admin.yml (можно в Git с шаблонами):
+admin:
+  authentication:
+    secret: "${JWT_SECRET}"  # Подстановка из .env
+```
+
+### **Автоматизация:**
+
+```bash
+# Генерация шаблона конфига
+npm run config:generate
+
+# Валидация конфига
+npm run config:validate
+
+# Применение конфига (перезапуск сервисов)
+npm run config:apply
+
+# Сравнение версий
+npm run config:diff -- --from v1.0 --to v1.1
+```
+
+---
+
+## **6.2. Настройки магазина**
+
+### **Общие настройки:**
+
+```typescript
+interface ShopSettings {
+  // Основная информация
+  shop: {
+    name: string;
+    description: string;
+    logo: string;
+    favicon: string;
+  };
+  
+  // Валюта и цены
+  pricing: {
+    currency: 'RUB' | 'USD' | 'EUR';
+    taxRate: number;
+    includeTax: boolean;
+    decimalPlaces: number;
+  };
+  
+  // Склад
+  inventory: {
+    trackStock: boolean;
+    allowBackorder: boolean;
+    lowStockThreshold: number;
+  };
+  
+  // Корзина
+  cart: {
+    expireAfter: number;      // часов
+    maxQuantity: number;
+    minOrderAmount: number;
+  };
+}
+```
+
+### **Настройки оплаты:**
+
+```typescript
+interface PaymentSettings {
+  // Включенные методы
+  enabledMethods: PaymentMethod[];
+  
+  // CloudPayments
+  cloudpayments: {
+    enabled: boolean;
+    merchantId: string;
+    publicKey: string;
+    secretKey: string;
+    testMode: boolean;
+  };
+  
+  // ЮKassa
+  yookassa: {
+    enabled: boolean;
+    shopId: string;
+    secretKey: string;
+    testMode: boolean;
+  };
+  
+  // Настройки
+  requirePaymentForOrder: boolean;
+  allowPartialPayment: boolean;
+  partialPaymentPercent: number;
+}
+```
+
+### **Настройки доставки:**
+
+```typescript
+interface ShippingSettings {
+  // Методы
+  methods: {
+    pickup: {
+      enabled: boolean;
+      locations: PickupLocation[];
+    };
+    courier: {
+      enabled: boolean;
+      zones: DeliveryZone[];
+    };
+    cdek: {
+      enabled: boolean;
+      apiKey: string;
+      account: string;
+    };
+    boxberry: {
+      enabled: boolean;
+      apiKey: string;
+    };
+    pochta: {
+      enabled: boolean;
+      apiKey: string;
+    };
+  };
+  
+  // Бесплатная доставка
+  freeShipping: {
+    enabled: boolean;
+    minAmount: number;
+  };
+}
+```
+
+## **6.3. Настройки конструктора**
+
+### **Конфигурация конструктора:**
+
+```typescript
+interface ConfiguratorSettings {
+  // Доступность
+  enabled: boolean;
+  availableForGuests: boolean;
+  
+  // 3D настройки
+  scene3D: {
+    defaultView: CameraPreset;
+    allowCameraControl: boolean;
+    showGrid: boolean;
+    showAxes: boolean;
+    environment: string;
+  };
+  
+  // Анимации
+  animations: {
+    enabled: boolean;
+    onComponentAdd: string;
+    onComponentRemove: string;
+    onComponentChange: string;
+  };
+  
+  // Ограничения
+  limits: {
+    maxComponents: number;
+    allowCustomColors: boolean;
+    allowExport: boolean;
+  };
+  
+  // Сохранение
+  save: {
+    allowGuestSave: boolean;
+    autoSave: boolean;
+    autoSaveInterval: number;  // секунд
+  };
+}
+```
+
+### **Настройки узлов:**
+
+```typescript
+interface NodeSettings {
+  nodes: {
+    [nodeType: string]: {
+      enabled: boolean;
+      required: boolean;
+      allowMultiple: boolean;
+      defaultOption?: string;
+      visibleOptions: string[];
+    };
+  };
+  
+  // Зависимости
+  dependencies: DependencyRule[];
+  
+  // Правила
+  rules: {
+    allowIncompatible: boolean;
+    warnOnIncompatible: boolean;
+    autoResolveIncompatible: boolean;
+  };
+}
+```
+
+## **6.4. Настройки интеграций**
+
+### **OAuth провайдеры:**
+
+```typescript
+interface OAuthSettings {
+  google: {
+    enabled: boolean;
+    clientId: string;
+    clientSecret: string;
+    allowedDomains?: string[];
+  };
+  
+  yandex: {
+    enabled: boolean;
+    clientId: string;
+    clientSecret: string;
+  };
+  
+  telegram: {
+    enabled: boolean;
+    botToken: string;
+    botUsername: string;
+  };
+}
+```
+
+### **Telegram интеграция:**
+
+```typescript
+interface TelegramSettings {
+  // Бот
+  bot: {
+    enabled: boolean;
+    token: string;
+    username: string;
+    webhookUrl: string;
+  };
+  
+  // Уведомления
+  notifications: {
+    newOrder: {
+      enabled: boolean;
+      chatIds: number[];
+    };
+    newInquiry: {
+      enabled: boolean;
+      chatIds: number[];
+    };
+    paymentReceived: {
+      enabled: boolean;
+      chatIds: number[];
+    };
+  };
+  
+  // Автоответы
+  autoResponses: {
+    enabled: boolean;
+    templates: {
+      [command: string]: string;
+    };
+  };
+}
+```
+
+### **Email настройки:**
+
+```typescript
+interface EmailSettings {
+  // SMTP
+  smtp: {
+    host: string;
+    port: number;
+    secure: boolean;
+    auth: {
+      user: string;
+      pass: string;
+    };
+  };
+  
+  // Отправитель
+  from: {
+    email: string;
+    name: string;
+  };
+  
+  // Шаблоны
+  templates: {
+    orderConfirmation: string;
+    shippingNotification: string;
+    passwordReset: string;
+    welcomeEmail: string;
+  };
+}
+```
+
+## **6.5. Дашборды и аналитика**
+
+### **Дашборд магазина:**
+
+```typescript
+interface ShopDashboard {
+  // Продажи
+  sales: {
+    today: number;
+    week: number;
+    month: number;
+    total: number;
+  };
+  
+  // Заказы
+  orders: {
+    pending: number;
+    processing: number;
+    completed: number;
+    cancelled: number;
+  };
+  
+  // Товары
+  products: {
+    total: number;
+    lowStock: number;
+    outOfStock: number;
+  };
+  
+  // Конверсия
+  conversion: {
+    viewsToCart: number;
+    cartToOrder: number;
+    configuratorUsage: number;
+  };
+}
+```
+
+### **Дашборд конструктора:**
+
+```typescript
+interface ConfiguratorDashboard {
+  // Активность
+  sessions: {
+    today: number;
+    week: number;
+    month: number;
+  };
+  
+  // Конфигурации
+  configurations: {
+    created: number;
+    saved: number;
+    purchased: number;
+  };
+  
+  // Популярные компоненты
+  topComponents: {
+    nodeType: string;
+    componentId: string;
+    count: number;
+  }[];
+  
+  // Средний чек
+  averageOrderValue: number;
+}
+```
+
+---
+
+# **ЧАСТЬ 7. ОБНОВЛЕННАЯ СТРУКТУРА ПРОЕКТА**
+
+## **7.1. Структура файлов**
+
+```
+Perit/
+├── frontend/                    # Next.js приложение
+│   ├── app/
+│   │   ├── (shop)/             # Маршруты магазина
+│   │   │   ├── catalog/
+│   │   │   ├── product/
+│   │   │   ├── cart/
+│   │   │   ├── checkout/
+│   │   │   └── order/
+│   │   ├── (configurator)/     # Конструктор
+│   │   │   ├── builder/
+│   │   │   ├── presets/
+│   │   │   └── gallery/
+│   │   ├── (auth)/             # Авторизация
+│   │   │   ├── login/
+│   │   │   ├── register/
+│   │   │   └── profile/
+│   │   ├── api/                # API Routes
+│   │   │   ├── auth/
+│   │   │   ├── shop/
+│   │   │   ├── configurator/
+│   │   │   ├── payment/
+│   │   │   └── webhooks/
+│   │   └── admin/              # Админка (redirect)
+│   ├── components/
+│   │   ├── shop/               # Компоненты магазина
+│   │   ├── configurator/       # 3D конструктор
+│   │   │   ├── Scene3D/
+│   │   │   ├── ComponentPanel/
+│   │   │   ├── PropertyPanel/
+│   │   │   └── Toolbar/
+│   │   ├── auth/               # Компоненты авторизации
+│   │   └── ui/                 # UI компоненты
+│   ├── lib/
+│   │   ├── shop/               # Логика магазина
+│   │   ├── configurator/       # Логика конструктора
+│   │   ├── auth/               # Аутентификация
+│   │   └── payment/            # Платежи
+│   └── stores/                 # Zustand stores
+│       ├── cart.ts
+│       ├── configurator.ts
+│       └── user.ts
+│
+├── admin/                       # React Admin
+│   ├── src/
+│   │   ├── resources/
+│   │   │   ├── products/
+│   │   │   ├── components/
+│   │   │   ├── orders/
+│   │   │   ├── customers/
+│   │   │   ├── configurator/
+│   │   │   └── settings/
+│   │   ├── components/
+│   │   └── pages/
+│   └── package.json
+│
+├── backend/                     # Shared backend logic
+│   ├── src/
+│   │   ├── services/
+│   │   ├── models/
+│   │   └── utils/
+│   └── package.json
+│
+├── database/
+│   ├── migrations/
+│   ├── seeds/
+│   └── schema.prisma
+│
+├── docker/
+│   ├── nginx/
+│   ├── postgres/
+│   └── redis/
+│
+└── docker-compose.yml
+```
+
+## **7.2. Схема базы данных (Prisma)**
+
+```prisma
+// Пользователи и аутентификация
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  phone         String?
+  name          String
+  avatar        String?
+  role          UserRole  @default(CUSTOMER)
+  
+  // OAuth
+  accounts      Account[]
+  
+  // Заказы
+  orders        Order[]
+  
+  // Активность
+  viewHistory   ViewHistory[]
+  savedConfigs  SavedConfiguration[]
+  favorites     Favorite[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+}
+
+// Товары
+model Product {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+  description   String
+  type          ProductType
+  
+  // Цена
+  basePrice     Decimal
+  salePrice     Decimal?
+  currency      String    @default("RUB")
+  
+  // Категоризация
+  categoryId    String
+  brandId       String?
+  
+  // Характеристики
+  attributes    Json
+  
+  // Контент
+  images        ProductImage[]
+  model3D       Model3D?
+  
+  // Конфигуратор
+  configOptions ConfigOption[]
+  
+  // Склад
+  stock         Int
+  
+  // SEO
+  seoTitle      String?
+  seoDesc       String?
+  
+  status        ProductStatus @default(ACTIVE)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Комплектующие
+model Component {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+  category      ComponentCategory
+  
+  // Совместимость
+  compatibleWith String[]
+  
+  // Характеристики
+  specifications Json
+  
+  // 3D модель
+  model3D       Model3D?
+  
+  // Цена
+  price         Decimal
+  stock         Int
+  
+  images        ProductImage[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Заказы
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  userId        String?
+  
+  // Клиент
+  customerName  String
+  customerEmail String
+  customerPhone String
+  
+  // Товары
+  items         OrderItem[]
+  
+  // Оплата
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+  totalAmount   Decimal
+  
+  // Доставка
+  shippingMethod String
+  shippingAddress String
+  shippingCost   Decimal
+  
+  // Статус
+  status        OrderStatus @default(PENDING)
+  
+  user          User?       @relation(fields: [userId], references: [id])
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// Конфигурации конструктора
+model SavedConfiguration {
+  id            String    @id @default(cuid())
+  userId        String
+  name          String
+  
+  // Выбранные компоненты
+  configuration Json
+  
+  // Цена
+  totalPrice    Decimal
+  
+  // Публичный доступ
+  isPublic      Boolean   @default(false)
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Обращения
+model CustomerInquiry {
+  id            String        @id @default(cuid())
+  ticketNumber  String        @unique
+  userId        String?
+  
+  // Контакт
+  contactMethod ContactMethod
+  contactValue  String
+  
+  // Обращение
+  type          String
+  subject       String
+  message       String
+  status        InquiryStatus @default(NEW)
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum UserRole {
+  CUSTOMER
+  MANAGER
+  ADMIN
+}
+
+enum ProductType {
+  SIMPLE
+  CONFIGURABLE
+  SERVICE
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  SBP
+  YANDEX_PAY
+  SBER_PAY
+  CASH
+  INVOICE
+}
+
+enum ContactMethod {
+  TELEGRAM_MESSAGE
+  TELEGRAM_CALL
+  WHATSAPP
+  PHONE_CALL
+  EMAIL
+  CALLBACK
+}
+```
+
+---
+
+# **ЧАСТЬ 8. ЭТАПЫ РАЗРАБОТКИ**
+
+## **8.1. Текущий статус проекта (на 23 февраля 2026)**
+
+### **✅ Завершённый этап 0: Базовая инфраструктура**
+
+**Статус:** ✅ ВЫПОЛНЕНО (90%)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 0: Базовая инфраструктура                         │
+│  Статус: ✅ Завершён                                    │
+│  Готовность: 90%                                        │
+├─────────────────────────────────────────────────────────┤
+│  ✅ Docker окружение (PostgreSQL + Redis)               │
+│  ✅ Next.js API с Prisma ORM                            │
+│  ✅ React Admin админ-панель (базовая)                  │
+│  ✅ Middleware безопасности                             │
+│  ✅ Тестовые данные в БД                                │
+│  ✅ Публичные API эндпоинты                             │
+│  ⚠️  Защита по IP (требуется доработка)                 │
+│  ⚠️  React Admin компоненты (требуется настройка)       │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Что работает:**
+- Docker Compose развёртывание
+- PostgreSQL база данных
+- Redis кэширование
+- Next.js API Routes
+- Prisma ORM и миграции
+- Базовая структура React Admin
+
+**Требует доработки:**
+- Настройка компонентов React Admin (CRUD для товаров)
+- Доработка защиты админки (IP whitelist + JWT)
+- Интеграция фронтенда с новым API
+- Настройка middleware для CORS
+
+---
+
+## **8.2. Этап 1: Улучшение базового функционала**
+
+**Статус:** 🔄 В РАБОТЕ (следующий)
+
+**Срок:** 3-4 недели
+
+**Цель:** Довести до production-ready базовый функционал сайта
+
+### **Задачи:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 1: Улучшение базового функционала                 │
+│  Статус: 🔄 В очереди                                   │
+│  Срок: 3-4 недели                                       │
+├─────────────────────────────────────────────────────────┤
+│  1.1. Админ-панель (React Admin)                        │
+│      ├── ✅ Базовая структура                           │
+│      ├── ⏳ CRUD товаров                                │
+│      ├── ⏳ CRUD категорий                              │
+│      ├── ⏳ CRUD услуг ремонта                          │
+│      ├── ⏳ Загрузка изображений                        │
+│      └── ⏳ Редактирование текстов страниц              │
+│                                                         │
+│  1.2. Фронтенд (Next.js)                                │
+│      ├── ⏳ Подключение к новому API                    │
+│      ├── ⏳ Лендинг "Продажа гриндеров"                 │
+│      ├── ⏳ Лендинг "Ремонт оборудования"               │
+│      ├── ⏳ Каталог товаров                             │
+│      └── ⏳ Карточка товара                             │
+│                                                         │
+│  1.3. Безопасность и доступ                             │
+│      ├── ⏳ IP whitelist для админки                    │
+│      ├── ⏳ JWT аутентификация                           │
+│      ├── ⏳ Rate limiting                               │
+│      └── ⏳ CORS настройки                              │
+│                                                         │
+│  1.4. Инфраструктура                                    │
+│      ├── ⏳ Production конфигурация                     │
+│      ├── ⏳ Nginx настройка                              │
+│      ├── ⏳ SSL сертификаты                              │
+│      └── ⏳ Мониторинг (Sentry, UptimeRobot)            │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Критерии завершения Этапа 1:**
+
+- [ ] Админка позволяет добавлять/редактировать товары
+- [ ] Фронтенд отображает товары из БД
+- [ ] Работают оба лендинга (продажа + ремонт)
+- [ ] Админка защищена (IP + JWT)
+- [ ] Развёрнуто на staging-сервере
+- [ ] Пройдено базовое тестирование
+
+---
+
+## **8.3. Этап 2: Адаптивность и кроссбраузерность**
+
+**Статус:** ⏳ Запланировано
+
+**Срок:** 2-3 недели
+
+**Цель:** Обеспечить корректную работу на всех устройствах и браузерах
+
+### **Поддерживаемые устройства:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Устройства и разрешения                                │
+├─────────────────────────────────────────────────────────┤
+│  📱 Смартфоны                                           │
+│     ├── iPhone (SE, 12, 13, 14, 15, 16)                │
+│     ├── Android (Samsung, Pixel, Xiaomi, Huawei)       │
+│     └── Разрешения: 320px - 480px                      │
+│                                                         │
+│  📱 Планшеты                                            │
+│     ├── iPad (Mini, Air, Pro)                          │
+│     ├── Android планшеты                                │
+│     └── Разрешения: 481px - 1024px                     │
+│                                                         │
+│  💻 ПК и ноутбуки                                       │
+│     ├── Ноутбуки: 1024px - 1440px                      │
+│     ├── Десктопы: 1441px - 1920px                      │
+│     └── Большие экраны: 1921px+                        │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Поддерживаемые браузеры:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Браузеры (поддержка 5 лет назад и новее)               │
+├─────────────────────────────────────────────────────────┤
+│  ✅ Chrome 88+ (2021+)                                  │
+│  ✅ Firefox 85+ (2021+)                                 │
+│  ✅ Safari 14+ (2021+)                                  │
+│  ✅ Edge 88+ (2021+)                                    │
+│  ✅ Opera 74+ (2021+)                                   │
+│  ✅ Яндекс.Браузер 21+ (2021+)                          │
+│  ✅ Samsung Internet 14+ (2021+)                        │
+│  ⚠️  IE 11 (только критический функционал, без 3D)     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Поддерживаемые ОС:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Операционные системы                                   │
+├─────────────────────────────────────────────────────────┤
+│  🖥️ Десктоп                                             │
+│     ├── Windows 10/11                                   │
+│     ├── macOS 11+ (Big Sur и новее)                    │
+│     ├── Linux (Ubuntu 20.04+, Fedora 34+, Debian 11+)  │
+│     └── ChromeOS                                        │
+│                                                         │
+│  📱 Мобильные                                           │
+│     ├── iOS 14+                                         │
+│     ├── Android 10+                                     │
+│     └── HarmonyOS 2+                                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Задачи Этапа 2:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 2: Адаптивность и кроссбраузерность               │
+│  Статус: ⏳ Запланировано                               │
+│  Срок: 2-3 недели                                       │
+├─────────────────────────────────────────────────────────┤
+│  2.1. Адаптивный дизайн                                 │
+│      ├── Mobile First подход                            │
+│      ├── Breakpoints: 320, 480, 768, 1024, 1440, 1920  │
+│      ├── Гибкая сетка (CSS Grid + Flexbox)             │
+│      ├── Адаптивные изображения (srcset, sizes)        │
+│      └── Тестирование на реальных устройствах          │
+│                                                         │
+│  2.2. Кроссбраузерность                                 │
+│      ├── CSS префиксы (Autoprefixer)                    │
+│      ├── Полифилы для старых браузеров                  │
+│      ├── Fallback для современных функций               │
+│      ├── Progressive Enhancement                        │
+│      └── Graceful Degradation                           │
+│                                                         │
+│  2.3. 3D fallback (для старых браузеров)                │
+│      ├── Статичные изображения вместо 3D                │
+│      ├── Упрощённая версия без WebGL                    │
+│      └── Сообщение о неподдерживаемом браузере         │
+│                                                         │
+│  2.4. Тестирование                                      │
+│      ├── BrowserStack / Sauce Labs                      │
+│      ├── Lighthouse (mobile + desktop)                  │
+│      ├── Ручное тестирование на устройствах            │
+│      └── Автоматические скриншот-тесты                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Критерии завершения Этапа 2:**
+
+- [ ] Сайт корректно отображается на всех разрешениях
+- [ ] Все браузеры из списка поддерживаются
+- [ ] Lighthouse score > 90 для mobile и desktop
+- [ ] 3D имеет fallback для старых браузеров
+- [ ] Пройдено тестирование на 10+ устройствах
+
+---
+
+## **8.4. Этап 3: 3D Конструктор (базовая версия)**
+
+**Статус:** ⏳ Запланировано
+
+**Срок:** 4-5 недель
+
+**Цель:** Реализовать базовый 3D-конструктор без сложных анимаций
+
+### **Задачи:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 3: 3D Конструктор (базовая версия)                │
+│  Статус: ⏳ Запланировано                               │
+│  Срок: 4-5 недель                                       │
+├─────────────────────────────────────────────────────────┤
+│  3.1. Базовая 3D сцена                                  │
+│      ├── Three.js + React Three Fiber                   │
+│      ├── Загрузка .glb/.gltf моделей                    │
+│      ├── Орбитальное управление камерой                 │
+│      ├── Базовое освещение                              │
+│      └── Простой фон (студия)                           │
+│                                                         │
+│  3.2. Система компонентов                               │
+│      ├── Загрузка моделей компонентов                   │
+│      ├── Точки крепления (mount points)                 │
+│      ├── Выбор узлов из панели                          │
+│      ├── Проверка совместимости                         │
+│      └── Подсветка выбранного компонента                │
+│                                                         │
+│  3.3. Базовое взаимодействие                            │
+│      ├── Клик для выбора                                │
+│      ├── Вращение камеры (orbit)                        │
+│      ├── Zoom (zoom in/out)                             │
+│      ├── Пресеты камер (front, side, top, isometric)   │
+│      └── Панель выбранных компонентов                   │
+│                                                         │
+│  3.4. Расчёт цены                                       │
+│      ├── Суммирование стоимости компонентов             │
+│      ├── Отображение в реальном времени                 │
+│      └── Сохранение конфигурации (JSON)                 │
+│                                                         │
+│  3.5. Простые анимации                                  │
+│      ├── Fade in/out при добавлении/удалении           │
+│      ├── Базовое перемещение (lerp)                     │
+│      └── Без физической симуляции                       │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Критерии завершения Этапа 3:**
+
+- [ ] 3D сцена загружается и работает
+- [ ] Можно выбрать компонент и увидеть его в сцене
+- [ ] Камера вращается и приближается
+- [ ] Цена обновляется при изменении конфигурации
+- [ ] Конфигурация сохраняется в JSON
+- [ ] Работает на desktop и планшетах
+
+---
+
+## **8.5. Этап 4: Продвинутые анимации конструктора**
+
+**Статус:** ⏳ Запланировано
+
+**Срок:** 4-5 недель
+
+**Цель:** Реализовать детальные физические анимации сборки/разборки
+
+### **Задачи:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 4: Продвинутые анимации конструктора              │
+│  Статус: ⏳ Запланировано                               │
+│  Срок: 4-5 недель                                       │
+├─────────────────────────────────────────────────────────┤
+│  4.1. Анимация отвинчивания                             │
+│      ├── Вибрация компонента                            │
+│      ├── Вращение болта (против часовой)               │
+│      ├── Подъём болта с резьбой                         │
+│      └── Звуковые эффекты (опционально)                 │
+│                                                         │
+│  4.2. Анимация удаления                                 │
+│      ├── Отсоединение от поверхности                    │
+│      ├── Полёт за край экрана (по дуге)                 │
+│      ├── Вращение и уменьшение                          │
+│      └── Fade out у края                                │
+│                                                         │
+│  4.3. Анимация добавления                               │
+│      ├── Появление из-за края                           │
+│      ├── Полёт к точке крепления (по дуге)              │
+│      ├── Позиционирование и покачивание                 │
+│      ├── "Примагничивание" (snap)                       │
+│      └── Вспышка в месте контакта                       │
+│                                                         │
+│  4.4. Анимация привинчивания                            │
+│      ├── Появление болта над отверстием                 │
+│      ├── Опускание в отверстие                          │
+│      ├── Вращение по часовой с погружением              │
+│      ├── Финальная затяжка                              │
+│      └── Щелчок/звук в конце                            │
+│                                                         │
+│  4.5. Анимация замены                                   │
+│      ├── Комбинация удаления + добавления               │
+│      ├── Плавный переход между этапами                  │
+│      └── Подсветка места замены                         │
+│                                                         │
+│  4.6. Физика и эффекты                                  │
+│      ├── Обнаружение столкновений                       │
+│      ├── Гравитация (для падающих деталей)              │
+│      ├── Motion blur                                    │
+│      ├── Тени в реальном времени                        │
+│      └── Ambient occlusion                              │
+│                                                         │
+│  4.7. Оптимизация                                       │
+│      ├── LOD (уровни детализации)                       │
+│      ├── Draco сжатие геометрии                          │
+│      ├── Basis сжатие текстур                           │
+│      └── Инстансинг для повторяющихся объектов          │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Критерии завершения Этапа 4:**
+
+- [ ] Все 5 типов анимаций работают
+- [ ] Анимации плавные (60 FPS на desktop)
+- [ ] Физически точные (видна резьба, вращение)
+- [ ] Есть звуковые эффекты (опционально)
+- [ ] Работает на планшетах (30+ FPS)
+- [ ] Есть режим reduced motion
+
+---
+
+## **8.6. Этап 5: Интернет-магазин**
+
+**Статус:** ⏳ Запланировано
+
+**Срок:** 4-5 недель
+
+**Цель:** Реализовать полноценный интернет-магазин
+
+### **Задачи:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 5: Интернет-магазин                               │
+│  Статус: ⏳ Запланировано                               │
+│  Срок: 4-5 недели                                       │
+├─────────────────────────────────────────────────────────┤
+│  5.1. Каталог товаров                                   │
+│      ├── Сетка товаров с фильтрами                      │
+│      ├── Сортировка (цена, популярность, новизна)       │
+│      ├── Поиск по товарам                               │
+│      ├── Категории и теги                               │
+│      └── Быстрый просмотр                               │
+│                                                         │
+│  5.2. Карточка товара                                   │
+│      ├── Галерея изображений                            │
+│      ├── Характеристики                                 │
+│      ├── 3D модель (если есть)                          │
+│      ├── Выбор количества                               │
+│      └── Кнопка "В корзину"                             │
+│                                                         │
+│  5.3. Корзина                                           │
+│      ├── Добавление/удаление товаров                    │
+│      ├── Изменение количества                           │
+│      ├── Промокоды                                      │
+│      ├── Расчёт доставки                                │
+│      └── Сохранение для позже                           │
+│                                                         │
+│  5.4. Оформление заказа (Checkout)                      │
+│      ├── Данные покупателя                              │
+│      ├── Способ доставки                                │
+│      ├── Способ оплаты                                  │
+│      ├── Комментарий к заказу                           │
+│      └── Подтверждение заказа                           │
+│                                                         │
+│  5.5. Личный кабинет                                    │
+│      ├── История заказов                                │
+│      ├── Статусы заказов                                │
+│      ├── Избранное                                      │
+│      ├── Сохранённые конфигурации                       │
+│      └── Настройки профиля                              │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Критерии завершения Этапа 5:**
+
+- [ ] Каталог товаров с фильтрами работает
+- [ ] Корзина сохраняет товары
+- [ ] Checkout оформляет заказ в БД
+- [ ] Личный кабинет отображает историю
+- [ ] Письма-подтверждения отправляются
+
+---
+
+## **8.7. Этап 6: Онлайн-оплата**
+
+**Статус:** ⏳ Запланировано
+
+**Срок:** 3-4 недели
+
+**Цель:** Интегрировать платёжные системы
+
+### **Задачи:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 6: Онлайн-оплата                                  │
+│  Статус: ⏳ Запланировано                               │
+│  Срок: 3-4 недели                                       │
+├─────────────────────────────────────────────────────────┤
+│  6.1. Платёжные системы                                 │
+│      ├── CloudPayments (карты, СБП)                     │
+│      ├── ЮKassa (Яндекс Пэй, СберПэй)                  │
+│      └── Счёт для юрлиц                                 │
+│                                                         │
+│  6.2. Интеграция                                        │
+│      ├── Платёжный виджет на checkout                   │
+│      ├── Webhook обработчики                            │
+│      ├── Обработка успешой оплаты                       │
+│      └── Обработка ошибок                               │
+│                                                         │
+│  6.3. Личный кабинет                                    │
+│      ├── История платежей                               │
+│      ├── Статусы оплат                                  │
+│      └── Возвраты (рефанды)                             │
+│                                                         │
+│  6.4. Безопасность                                      │
+│      ├── PCI DSS compliance                             │
+│      ├── 3D Secure                                      │
+│      ├── Фрод-мониторинг                                │
+│      └── Логирование транзакций                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Критерии завершения Этапа 6:**
+
+- [ ] Оплата картами работает
+- [ ] СБП работает
+- [ ] Webhooks обрабатываются
+- [ ] Статусы заказов обновляются
+- [ ] Возвраты работают
+
+---
+
+## **8.8. Этап 7: Авторизация (OAuth)**
+
+**Статус:** ⏳ Запланировано
+
+**Срок:** 2-3 недели
+
+**Цель:** Реализовать авторизацию через соцсети
+
+### **Задачи:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 7: Авторизация (OAuth)                            │
+│  Статус: ⏳ Запланировано                               │
+│  Срок: 2-3 недели                                       │
+├─────────────────────────────────────────────────────────┤
+│  7.1. Провайдеры                                        │
+│      ├── Google OAuth 2.0                               │
+│      ├── Яндекс OAuth 2.0                               │
+│      └── Telegram Login                                 │
+│                                                         │
+│  7.2. Интеграция                                        │
+│      ├── NextAuth.js настройка                          │
+│      ├── Кнопки входа на сайте                          │
+│      ├── Связывание OAuth с локальным аккаунтом        │
+│      └── Сессионное управление                          │
+│                                                         │
+│  7.3. Личный кабинет                                    │
+│      ├── История просмотров                             │
+│      ├── История заказов                                │
+│      ├── Сохранённые конфигурации                       │
+│      └── Избранное                                      │
+│                                                         │
+│  7.4. Админка (OAuth для менеджеров)                    │
+│      ├── Google OAuth для входа в админку               │
+│      ├── Роли и разрешения                              │
+│      └── Логирование действий                           │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Критерии завершения Этапа 7:**
+
+- [ ] Вход через Google работает
+- [ ] Вход через Яндекс работает
+- [ ] Вход через Telegram работает
+- [ ] Сессии сохраняются
+- [ ] История ведётся
+- [ ] Админка защищена OAuth
+
+---
+
+## **8.9. Этап 8: Интеграции и уведомления**
+
+**Статус:** ⏳ Запланировано
+
+**Срок:** 3-4 недели
+
+### **Задачи:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 8: Интеграции и уведомления                       │
+│  Статус: ⏳ Запланировано                               │
+│  Срок: 3-4 недели                                       │
+├─────────────────────────────────────────────────────────┤
+│  8.1. Telegram интеграция                               │
+│      ├── Бот для уведомлений менеджерам                 │
+│      ├── Отправка заказов в Telegram                    │
+│      ├── Форма связи с менеджером                       │
+│      └── Webhook обработчики                            │
+│                                                         │
+│  8.2. Email уведомления                                 │
+│      ├── SMTP настройка                                 │
+│      ├── Шаблоны писем                                  │
+│      ├── Подтверждение заказа                           │
+│      ├── Уведомление об оплате                          │
+│      └── Уведомление об отправке                        │
+│                                                         │
+│  8.3. Доставка интеграции                               │
+│      ├── СДЭК API                                       │
+│      ├── BoxBerry API                                   │
+│      └── Почта России API                               │
+│                                                         │
+│  8.4. Аналитика                                         │
+│      ├── Google Analytics 4                             │
+│      ├── Яндекс.Метрика                                 │
+│      ├── E-commerce трекинг                             │
+│      └── Дашборды в админке                             │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## **8.10. Этап 9: Тестирование и запуск**
+
+**Статус:** ⏳ Запланировано
+
+**Срок:** 2-3 недели
+
+### **Задачи:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  ЭТАП 9: Тестирование и запуск                          │
+│  Статус: ⏳ Запланировано                               │
+│  Срок: 2-3 недели                                       │
+├─────────────────────────────────────────────────────────┤
+│  9.1. Функциональное тестирование                       │
+│      ├── Unit тесты                                     │
+│      ├── Integration тесты                              │
+│      ├── E2E тесты (Playwright/Cypress)                 │
+│      └── Ручное тестирование                            │
+│                                                         │
+│  9.2. Нагрузочное тестирование                          │
+│      ├── k6 / Artillery тесты                           │
+│      ├── Проверка на 1000+ одновременных пользователей  │
+│      └── Оптимизация узких мест                         │
+│                                                         │
+│  9.3. SEO оптимизация                                   │
+│      ✅ Meta теги                                       │
+│      ✅ Schema.org разметка                             │
+│      ✅ Sitemap.xml                                     │
+│      ✅ Robots.txt                                      │
+│      └── JSON-LD                                        │
+│                                                         │
+│  9.4. Документация                                      │
+│      ├── API документация                               │
+│      ├── Инструкция для админки                         │
+│      ├── Руководство по развёртыванию                   │
+│      └── SEO руководство                                │
+│                                                         │
+│  9.5. Production развёртывание                          │
+│      ├── VPS настройка                                  │
+│      ├── SSL сертификаты                                │
+│      ├── CDN (Cloudflare)                               │
+│      ├── Бэкапы                                         │
+│      └── Мониторинг                                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## **8.11. Сводная таблица этапов**
+
+| Этап | Название | Срок | Статус | Приоритет |
+|------|----------|------|--------|-----------|
+| 0 | Базовая инфраструктура | - | ✅ 90% | - |
+| 1 | Улучшение базового функционала | 3-4 нед | 🔄 В очереди | 🔴 Высокий |
+| 2 | Адаптивность и кроссбраузерность | 2-3 нед | ⏳ Запланировано | 🔴 Высокий |
+| 3 | 3D Конструктор (базовая) | 4-5 нед | ⏳ Запланировано | 🟡 Средний |
+| 4 | Продвинутые анимации | 4-5 нед | ⏳ Запланировано | 🟡 Средний |
+| 5 | Интернет-магазин | 4-5 нед | ⏳ Запланировано | 🔴 Высокий |
+| 6 | Онлайн-оплата | 3-4 нед | ⏳ Запланировано | 🔴 Высокий |
+| 7 | Авторизация (OAuth) | 2-3 нед | ⏳ Запланировано | 🟡 Средний |
+| 8 | Интеграции и уведомления | 3-4 нед | ⏳ Запланировано | 🟢 Низкий |
+| 9 | Тестирование и запуск | 2-3 нед | ⏳ Запланировано | 🔴 Высокий |
+
+**Общий срок реализации:** 29-38 недель (7-9 месяцев)
+
+---
+
+## **8.12. Соответствие конфигурации и документации по этапам**
+
+### **Матрица конфигурации (config.admin.yml) по этапам:**
+
+| Этап | Конфигурация | Документация | Тестирование |
+|------|--------------|--------------|--------------|
+| **Этап 0** | ✅ Базовая (порты, Docker) | ✅ README, BRANCHING | ⚠️ Ручное |
+| **Этап 1** | ⚠️ CRUD + загрузка файлов | 🔧 DEVELOPMENT (новый) | 🔧 TESTING (новый) |
+| **Этап 2** | ⚠️ Breakpoints + браузеры | 🔧 ARCHITECTURE (обновить) | ✅ Кроссбраузерное |
+| **Этап 3** | 🔧 3D настройки + LOD | 🔧 3D_GUIDE (новый) | ✅ 3D тесты |
+| **Этап 4** | 🔧 Анимации + физика | 🔧 ANIMATIONS (новый) | ✅ Анимации |
+| **Этап 5** | 🔧 Магазин + корзина | 🔧 SHOP (новый) | ✅ E2E магазин |
+| **Этап 6** | 🔧 Платежи + webhook | 🔧 PAYMENTS (новый) | ✅ Платежи |
+| **Этап 7** | 🔧 OAuth + сессии | 🔧 AUTH (новый) | ✅ Авторизация |
+| **Этап 8** | 🔧 Telegram + Email | 🔧 INTEGRATIONS (новый) | ✅ Интеграции |
+| **Этап 9** | ✅ Production + мониторинг | 🔧 DEPLOYMENT (обновить) | ✅ Полное |
+
+**Условные обозначения:**
+- ✅ Уже есть / готово
+- ⚠️ Требуется дополнение
+- 🔧 Создать / значительно обновить
+
+---
+
+### **Детализация по этапам:**
+
+#### **ЭТАП 0: Базовая инфраструктура** (✅ 90% готов)
+
+```yaml
+# config.admin.yml - Требуемая конфигурация
+project:
+  environment: development
+  
+ports:
+  frontend: { development: 3002 }
+  api: { docker: 3004, external: 3000 }
+  admin: 3001
+  database: { postgresql: 5432, redis: 6379 }
+
+hosts:
+  development:
+    frontend: "http://localhost:3002"
+    api: "http://localhost:3004"
+    admin: "http://localhost:3001"
+
+# Минимальная конфигурация для Этапа 0
+deployment:
+  development:
+    command: "docker compose up -d"
+```
+
+**Документация:**
+- ✅ README.md — общий обзор
+- ✅ BRANCHING.md — Git workflow
+- ✅ VPS_DEPLOYMENT.md — деплой
+- ⚠️ STRUCTURE.md — требует актуализации
+
+**Тестирование:**
+- ⚠️ Ручное тестирование инфраструктуры
+- ⚠️ Health checks API
+
+---
+
+#### **ЭТАП 1: Улучшение базового функционала** (🔄 В очереди)
+
+```yaml
+# config.admin.yml - Дополнения для Этапа 1
+admin:
+  features:
+    fileUpload:
+      maxSize: "10MB"
+      allowedTypes: ["image/jpeg", "image/png", "image/webp"]
+      uploadPath: "/uploads"
+      thumbnails: true
     
-  - Глобальные SEO-настройки:
-    1. Шаблоны Title/Description для категорий
-    2. Стандартные meta-теги для всех страниц
-    3. Скрипты аналитики (GA4, Яндекс.Метрика, VK)
-    4. Верификация сайта (Google, Яндекс)
+    crud:
+      products: true
+      services: true
+      categories: true
+
+security:
+  ipWhitelist:
+    development: ["127.0.0.1", "localhost", "172.16.0.0/12"]
+    production: ["${PRODUCTION_ADMIN_IP}"]
+  
+  rateLimit:
+    requests: 1000
+    window: "1h"
+
+monitoring:
+  health:
+    checks: ["database", "redis", "api"]
+    interval: 60000
 ```
 
-#### **SEO-аналитика в реальном времени:**
-1. **Интеграция с Яндекс.Вебмастер и Google Search Console:**
-   - Автоматическая отправка sitemap
-   - Мониторинг индексации (количество страниц в индексе)
-   - Отслеживание ошибок краулинга
+**Документация (требования):**
+- 🔧 **docs/DEVELOPMENT.md** — настройка окружения, CRUD, загрузка файлов
+- 🔧 **docs/CONFIGURATION.md** — обновление (config.admin.yml + guide)
+- ⚠️ **docs/ARCHITECTURE.md** — добавить схему API
 
-2. **Дашборд SEO-метрик:**
-   - Позиции ключевых запросов (через API сторонних сервисов)
-   - Скорость загрузки (через PageSpeed Insights API)
-   - Количество индексированных страниц
-   - Входящие ссылки (через Ahrefs/Semrush API)
-
-### **8.3. Контент-стратегия и потенциал раскрутки**
-
-#### **Встроенные инструменты для контент-маркетинга:**
-
-1. **Блог с SEO-оптимизацией:**
-   - Категории статей: "Обработка металла", "Советы по выбору", "Обзоры оборудования"
-   - Автоматическое формирование внутренних ссылок
-   - Встроенный редактор с SEO-подсказками:
-     - Рекомендуемая длина текста
-     - Ключевые слова в H2-H3
-     - Оптимальное количество изображений
-     - Чек-лист перед публикацией
-
-2. **Видео-контент:**
-   - Галлерея видео-обзоров
-   - YouTube интеграция (авто-обновление плейлистов)
-   - Субтитры для SEO
-
-3. **SEO-отчеты:**
-   - Еженедельные PDF-отчеты на email:
-     - Динамика позиций
-     - Трафик из поиска
-     - Рекомендации по улучшению
-
-### **8.4. Локальное SEO (Local SEO)**
-
-1. **Региональное продвижение:**
-   - Автоматическая генерация landing pages для городов
-     - `/repair/moscow`
-     - `/repair/saint-petersburg`
-   - Уникальные тексты и контакты для каждого города
-   - Интеграция с Яндекс.Справочником и Google My Business
-
-2. **Отзывы и репутация:**
-   - Встроенная система сбора отзывов
-   - Автоматическая публикация отзывов на сайт
-   - Модерация через админку
-   - Ответы на отзывы
-
-### **8.5. Первоначальная SEO-настройка (при запуске)**
-
-#### **Технический аудит перед запуском:**
-- [x] Проверка индексации (noindex на staging)
-- [x] Настройка 301 редиректов со старого сайта (если был)
-- [x] Валидация Schema.org разметки
-- [x] Тестирование мобильной версии
-- [x] Проверка скорости в 10 регионах
-
-#### **Базовая семантика (пример для заполнения):**
-```
-Основные запросы:
-1. [купить гриндер] - коммерческий
-2. [гриндер для металла] - информационный
-3. [ремонт гриндера] - коммерческий
-4. [ленточно-шлифовальный станок] - высокочастотный
-
-Города: Москва, СПб, Екатеринбург, Новосибирск и т.д.
-```
-
-### **8.6. Система сквозной аналитики**
-
-#### **Интеграции:**
-1. **Яндекс.Метрика:**
-   - Вебвизор
-   - Цели (заявки, просмотр товара, скачивание прайса)
-   - E-commerce (трекинг продаж)
-
-2. **Google Analytics 4:**
-   - Enhanced E-commerce
-   - User journey
-   - Predictive analytics
-
-3. **CRM интеграция:**
-   - Отправка лидов в AmoCRM/Bitrix24
-   - UTM-метки для рекламных кампаний
-   - ROI калькулятор
-
-#### **Дашборд эффективности:**
-- Конверсия с поиска
-- Стоимость привлечения клиента (CAC)
-- ROI по ключевым словам
-- География заявок
-
-### **8.7. План раскрутки на первые 6 месяцев**
-
-#### **Месяц 1-2: Техническая подготовка**
-- Индексация 50+ страниц
-- Базовая семантика (100+ запросов)
-- Наполнение блога (15 статей)
-- Регистрация в локальных справочниках
-
-#### **Месяц 3-4: Контентное продвижение**
-- Еженедельные статьи в блог (2-3 в неделю)
-- Видео-контент (обзоры, инструкции)
-- Сбор отзывов (минимум 20)
-- Внутренняя перелинковка
-
-#### **Месяц 5-6: Авторитет и трафик**
-- Гостевые посты на тематических сайтах
-- Внешние ссылки с профильных ресурсов
-- Мониторинг и оптимизация по позициям
-- A/B тестирование посадочных страниц
-
-### **8.8. Бюджет на SEO (рекомендации)**
-
-#### **Обязательные инвестиции:**
-1. **Инструменты:**
-   - KeyCollector/Ahrefs - 5-10к ₽/мес
-   - Сервисы мониторинга позиций - 2-3к ₽/мес
-
-2. **Контент:**
-   - Копирайтер (15 статей в месяц) - 15-25к ₽
-   - Видеограф (2 видео в месяц) - 10-20к ₽
-
-3. **Внешние ссылки:**
-   - Качественные доноры - 10-20к ₽/мес
-
-**Итого:** 40-60к ₽/мес на первые 6 месяцев
-
-### **8.9. KPI для оценки эффективности**
-
-1. **Количественные:**
-   - Трафик из поиска: рост на 30% в месяц
-   - Позиции: топ-10 по 50+ запросам за 3 месяца
-   - Заявки: 15+ в месяц с органики
-
-2. **Качественные:**
-   - Улучшение поведенческих факторов
-   - Снижение bounce rate до 40%
-   - Увеличение времени на сайте до 3+ минут
-
-3. **Технические:**
-   - Lighthouse score > 90
-   - Индекс скорости Mobile > 80
-   - 100% доступность сайта
+**Тестирование (требования):**
+- 🔧 **docs/TESTING.md** — Unit, Integration, E2E тесты
+- 🔧 Unit тесты для CRUD товаров (80%+ покрытие)
+- 🔧 Integration тесты API
+- 🔧 E2E сценарии для админки
 
 ---
 
-## **9. Заключительные требования по SEO**
+#### **ЭТАП 2: Адаптивность и кроссбраузерность** (⏳ Запланировано)
 
-### **Обязательные при сдаче проекта:**
-1. [ ] Полная SEO-разметка на всех страницах
-2. [ ] Генераторы sitemap.xml и robots.txt
-3. [ ] Дашборд с базовыми SEO-метриками в админке
-4. [ ] Инструкция по SEO-наполнению
-5. [ ] Интеграция с Яндекс.Вебмастер и Google Search Console
-6. [ ] Настроенные цели в Яндекс.Метрике и GA4
-7. [ ] Проведен технический SEO-аудит
-8. [ ] Заполнены мета-теги для 50+ страниц
-9. [ ] Сформирован семантический ядро (100+ запросов)
-10. [ ] Настроены UTM-метки для отслеживания
+```yaml
+# config.admin.yml - Дополнения для Этапа 2
+frontend:
+  responsive:
+    breakpoints:
+      xs: 320
+      sm: 480
+      md: 768
+      lg: 1024
+      xl: 1440
+      '2xl': 1920
+  
+  browsers:
+    supported:
+      - "Chrome 88+"
+      - "Firefox 85+"
+      - "Safari 14+"
+      - "Edge 88+"
+      - "Opera 74+"
+      - "Yandex 21+"
+  
+  performance:
+    lighthouse:
+      mobile: 90
+      desktop: 90
+    coreWebVitals:
+      lcp: 2.5
+      fid: 100
+      cls: 0.1
+```
 
-### **Рекомендации для дальнейшего развития:**
-1. **Через 3 месяца:** Внедрение AI для генерации SEO-текстов
-2. **Через 6 месяцев:** Персонализация контента по регионам
-3. **Через 12 месяцев:** Мультиязычность для экспансии в СНГ
+**Документация (требования):**
+- ⚠️ **docs/ARCHITECTURE.md** — обновить breakpoints и браузеры
+- 🔧 **docs/RESPONSIVE.md** — руководство по адаптивности
+
+**Тестирование (требования):**
+- ✅ Кроссбраузерное тестирование (BrowserStack)
+- ✅ Тестирование на устройствах (10+ девайсов)
+- ✅ Lighthouse аудит (mobile + desktop)
 
 ---
 
-## **Обновленная структура проекта с SEO-фокусом**
+#### **ЭТАП 3: 3D Конструктор (базовая версия)** (⏳ Запланировано)
 
-### **Frontend (Next.js) - SEO-компоненты:**
-```javascript
-components/
-  seo/
-    SeoHead.jsx           # Динамические meta-теги
-    SchemaMarkup.jsx      # JSON-LD разметка
-    Breadcrumbs.jsx       # Навигационная цепочка
-    SitemapGenerator.js   # Генератор sitemap.xml
-    RobotsTxt.js         # Генератор robots.txt
+```yaml
+# config.admin.yml - Дополнения для Этапа 3
+frontend:
+  features:
+    3d:
+      enabled: true
+      renderer: "three"
+      antialias: true
+      shadows: true
+      maxTextureSize: 2048
+      
+      performance:
+        fps:
+          desktop: 60
+          tablet: 30
+          mobile: 30
+        loadTime: 3
+        memory: 256
+      
+      lod:
+        enabled: true
+        levels: 3
+        draco: true
+        basis: true
+
+construtor:
+  enabled: true
+  nodes:
+    - base
+    - frame
+    - motor
+    - drive_roller
+    - idler_roller
+    - tensioner
+    - belt
+  
+  camera:
+    presets: ["front", "side", "top", "isometric"]
+    orbit: true
+    zoom: true
 ```
 
-### **Backend (Next.js API) - SEO-эндпоинты:**
-```javascript
-src/app/api/
-  seo/
-    metadata/route.ts    # SEO-данные для страниц
-    sitemap/route.ts      # Генерация sitemap.xml
-    analytics/route.ts    # SEO-метрики
-    config/route.ts       # Глобальные SEO-настройки
+**Документация (требования):**
+- 🔧 **docs/3D_GUIDE.md** — настройка 3D сцены, модели, LOD
+- 🔧 **docs/CONSTRUCTOR.md** — архитектура конструктора
+
+**Тестирование (требования):**
+- ✅ 3D производительность (FPS, memory, draw calls)
+- ✅ Загрузка моделей (.glb/.gltf)
+- ✅ Работа камеры и управления
+
+---
+
+#### **ЭТАП 4: Продвинутые анимации конструктора** (⏳ Запланировано)
+
+```yaml
+# config.admin.yml - Дополнения для Этапа 4
+frontend:
+  features:
+    animations:
+      enabled: true
+      physics:
+        collision: true
+        gravity: true
+        threads: true
+      
+      effects:
+        motionBlur: true
+        depthOfField: true
+        ambientOcclusion: true
+        highlights: true
+        shadows: true
+      
+      types:
+        unscrew:
+          duration: 1100
+          phases: ["vibration", "rotation", "lift"]
+        remove:
+          duration: 1400
+          phases: ["detach", "flyOut", "fadeOut"]
+        add:
+          duration: 1650
+          phases: ["flyIn", "position", "descend", "snap"]
+        screw:
+          duration: 1150
+          phases: ["insert", "rotate", "tighten"]
+        replace:
+          duration: 3000
+      
+      accessibility:
+        reducedMotion: true
+        skipAnimation: true
 ```
 
-### **Инфраструктура для SEO:**
+**Документация (требования):**
+- 🔧 **docs/ANIMATIONS.md** — типы анимаций, физика, эффекты
+
+**Тестирование (требования):**
+- ✅ Плавность анимаций (60 FPS desktop, 30+ mobile)
+- ✅ Физическая точность (резьба, столкновения)
+- ✅ Accessibility (reduced motion)
+
+---
+
+#### **ЭТАП 5: Интернет-магазин** (⏳ Запланировано)
+
+```yaml
+# config.admin.yml - Дополнения для Этапа 5
+shop:
+  enabled: true
+  
+  catalog:
+    itemsPerPage: 12
+    filters:
+      - price
+      - category
+      - brand
+      - attributes
+    sorting:
+      - price
+      - popularity
+      - novelty
+  
+  cart:
+    expireAfter: 24  # часов
+    maxQuantity: 100
+    minOrderAmount: 1000
+  
+  checkout:
+    guest: false
+    registration: true
+    fields:
+      required: ["name", "email", "phone"]
+      optional: ["comment"]
+  
+  account:
+    orderHistory: true
+    favorites: true
+    savedConfigurations: true
+
+notifications:
+  orderConfirmation:
+    email: true
+    telegram: false
+  shippingNotification:
+    email: true
+    telegram: true
 ```
-Домен → Cloudflare (CDN + SSL) → Vercel (Frontend)
-                                    ↓
-            [SEO мониторинг] ← Next.js API → [Аналитика]
-                                    ↓
-                           PostgreSQL + Redis
+
+**Документация (требования):**
+- 🔧 **docs/SHOP.md** — каталог, корзина, checkout, личный кабинет
+
+**Тестирование (требования):**
+- ✅ E2E сценарии покупки
+- ✅ Корзина (добавление/удаление/промокоды)
+- ✅ Checkout (валидация/отправка)
+
+---
+
+#### **ЭТАП 6: Онлайн-оплата** (⏳ Запланировано)
+
+```yaml
+# config.admin.yml - Дополнения для Этапа 6
+payment:
+  enabledMethods:
+    - card
+    - sbp
+    - yandex_pay
+    - sber_pay
+    - mir_pay
+  
+  cloudpayments:
+    enabled: false  # Настраивается отдельно
+    merchantId: "${CLOUDPAYMENTS_MERCHANT_ID}"
+    publicKey: "${CLOUDPAYMENTS_PUBLIC_KEY}"
+    secretKey: "${CLOUDPAYMENTS_SECRET_KEY}"
+    testMode: true
+  
+  yookassa:
+    enabled: false  # Настраивается отдельно
+    shopId: "${YOOKASSA_SHOP_ID}"
+    secretKey: "${YOOKASSA_SECRET_KEY}"
+    testMode: true
+  
+  settings:
+    requirePaymentForOrder: true
+    allowPartialPayment: false
+    partialPaymentPercent: 30
+  
+  security:
+    pciDss: true
+    threeDSecure: true
+    fraudMonitoring: true
+  
+  webhooks:
+    success: "/api/webhooks/payment/success"
+    failure: "/api/webhooks/payment/failure"
+    refund: "/api/webhooks/payment/refund"
+```
+
+**Документация (требования):**
+- 🔧 **docs/PAYMENTS.md** — интеграция платёжных систем, webhooks, безопасность
+
+**Тестирование (требования):**
+- ✅ Платёжные сценарии (успех/отказ/возврат)
+- ✅ Webhook обработчики
+- ✅ PCI DSS compliance
+
+---
+
+#### **ЭТАП 7: Авторизация (OAuth)** (⏳ Запланировано)
+
+```yaml
+# config.admin.yml - Дополнения для Этапа 7
+auth:
+  methods:
+    email_password: true
+    google_oauth: true
+    yandex_oauth: true
+    telegram_login: true
+  
+  google:
+    enabled: false
+    clientId: "${GOOGLE_CLIENT_ID}"
+    clientSecret: "${GOOGLE_CLIENT_SECRET}"
+    scopes: ["openid", "email", "profile"]
+  
+  yandex:
+    enabled: false
+    clientId: "${YANDEX_CLIENT_ID}"
+    clientSecret: "${YANDEX_CLIENT_SECRET}"
+    scopes: ["login:email", "login:info", "login:avatar"]
+  
+  telegram:
+    enabled: false
+    botToken: "${TELEGRAM_BOT_TOKEN}"
+    botUsername: "${TELEGRAM_BOT_USERNAME}"
+  
+  session:
+    expiresIn: "24h"
+    refreshExpiresIn: "7d"
+    rotation: true
+  
+  history:
+    viewHistory: true
+    orderHistory: true
+    favorites: true
+```
+
+**Документация (требования):**
+- 🔧 **docs/AUTH.md** — OAuth провайдеры, сессии, история
+
+**Тестирование (требования):**
+- ✅ OAuth flow (Google, Yandex, Telegram)
+- ✅ Сессии (создание/продление/уничтожение)
+- ✅ История активности
+
+---
+
+#### **ЭТАП 8: Интеграции и уведомления** (⏳ Запланировано)
+
+```yaml
+# config.admin.yml - Дополнения для Этапа 8
+integrations:
+  telegram:
+    bot:
+      enabled: true
+      token: "${TELEGRAM_BOT_TOKEN}"
+      webhookUrl: "${DOMAIN}/api/webhooks/telegram"
+    
+    notifications:
+      newOrder: true
+      newInquiry: true
+      paymentReceived: true
+    
+    commands:
+      '/start': "Приветствие и меню"
+      '/catalog': "Показать каталог"
+      '/order': "Статус заказа"
+      '/support': "Связаться с поддержкой"
+  
+  email:
+    smtp:
+      host: "${SMTP_HOST}"
+      port: 587
+      secure: false
+      auth:
+        user: "${SMTP_USER}"
+        pass: "${SMTP_PASS}"
+    
+    templates:
+      orderConfirmation: true
+      shippingNotification: true
+      passwordReset: true
+      welcomeEmail: true
+  
+  shipping:
+    cdek:
+      enabled: false
+      apiKey: "${CDEK_API_KEY}"
+      account: "${CDEK_ACCOUNT}"
+    
+    boxberry:
+      enabled: false
+      apiKey: "${BOXBERRY_API_KEY}"
+    
+    pochta:
+      enabled: false
+      apiKey: "${POCHTA_API_KEY}"
+  
+  analytics:
+    googleAnalytics:
+      enabled: true
+      measurementId: "${GA_MEASUREMENT_ID}"
+    
+    yandexMetrika:
+      enabled: true
+      counterId: "${YM_COUNTER_ID}"
+```
+
+**Документация (требования):**
+- 🔧 **docs/INTEGRATIONS.md** — Telegram, Email, доставка, аналитика
+
+**Тестирование (требования):**
+- ✅ Telegram бот (команды/уведомления)
+- ✅ Email рассылка (шабло������ы/отправка)
+- ✅ Доставка API (СДЭК/BoxBerry)
+
+---
+
+#### **ЭТАП 9: Тестирование и запуск** (⏳ Запланировано)
+
+```yaml
+# config.admin.yml - Дополнения для Этапа 9
+deployment:
+  production:
+    command: "docker compose --profile production up -d"
+    ssl: true
+    monitoring:
+      sentry: true
+      uptime: true
+      analytics: true
+    
+    backup:
+      database:
+        enabled: true
+        schedule: "0 2 * * *"
+        retention: 30
+      files:
+        enabled: true
+        schedule: "0 3 * * 0"
+        retention: 7
+
+monitoring:
+  sentry:
+    enabled: true
+    dsn: "${SENTRY_DSN}"
+    environment: "production"
+  
+  uptimeRobot:
+    enabled: true
+    apiKey: "${UPTIMEROBOT_API_KEY}"
+  
+  prometheus:
+    enabled: true
+    endpoint: "/metrics"
+  
+  grafana:
+    enabled: true
+    url: "${GRAFANA_URL}"
+    apiKey: "${GRAFANA_API_KEY}"
+
+testing:
+  unit:
+    framework: "vitest"
+    coverage: 80
+  integration:
+    framework: "vitest"
+    coverage: 70
+  e2e:
+    framework: "playwright"
+    scenarios: 24
+  load:
+    framework: "k6"
+    maxUsers: 1000
+```
+
+**Документация (требования):**
+- ⚠️ **docs/DEPLOYMENT.md** — обновить для production
+- 🔧 **docs/PRODUCTION.md** — production настройка, мониторинг
+
+**Тестирование (требования):**
+- ✅ Unit тесты (80%+ покрытие)
+- ✅ Integration тесты (70%+ покрытие)
+- ✅ E2E тесты (критические пути)
+- ✅ Нагрузочное тестирование (1000+ пользователей)
+- ✅ SEO аудит
+
+---
+
+### **Сводная таблица документации по этапам:**
+
+| Документ | Этап 0 | Этап 1 | Этап 2 | Этап 3 | Этап 4 | Этап 5 | Этап 6 | Этап 7 | Этап 8 | Этап 9 |
+|----------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| **README.md** | ✅ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
+| **BRANCHING.md** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **ARCHITECTURE.md** | ⚠️ | ⚠️ | 🔧 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
+| **CONFIGURATION.md** | ⚠️ | 🔧 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
+| **DEVELOPMENT.md** | ❌ | 🔧 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
+| **TESTING.md** | ❌ | 🔧 | 🔧 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ✅ |
+| **DEPLOYMENT.md** | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | 🔧 |
+| **3D_GUIDE.md** | ❌ | ❌ | ❌ | 🔧 | ⚠️ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **ANIMATIONS.md** | ❌ | ❌ | ❌ | ❌ | 🔧 | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **SHOP.md** | ❌ | ❌ | ❌ | ❌ | ❌ | 🔧 | ⚠️ | ❌ | ❌ | ❌ |
+| **PAYMENTS.md** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🔧 | ❌ | ❌ | ❌ |
+| **AUTH.md** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🔧 | ⚠️ | ❌ |
+| **INTEGRATIONS.md** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🔧 | ⚠️ |
+
+**Условные обозначения:**
+- ✅ Актуально / готово
+- ⚠️ Требуется обновление
+- 🔧 Создать / значительно обновить
+- ❌ Не требуется
+
+---
+
+### **План обновления документации по этапам:**
+
+```markdown
+## Этап 0 (текущий)
+- [ ] docs/README.md — обновить ссылки
+- [ ] docs/ARCHITECTURE.md — актуализировать
+- [ ] docs/CONFIGURATION.md — объединить config + guide
+
+## Этап 1
+- [ ] docs/DEVELOPMENT.md — CRUD, загрузка файлов
+- [ ] docs/TESTING.md — базовые тесты
+
+## Этап 2
+- [ ] docs/ARCHITECTURE.md — breakpoints, браузеры
+- [ ] docs/RESPONSIVE.md — адаптивность
+
+## Этап 3
+- [ ] docs/3D_GUIDE.md — 3D сцена, модели
+- [ ] docs/CONSTRUCTOR.md — конструктор
+
+## Этап 4
+- [ ] docs/ANIMATIONS.md — анимации, физика
+
+## Этап 5
+- [ ] docs/SHOP.md — магазин, корзина, checkout
+
+## Этап 6
+- [ ] docs/PAYMENTS.md — платёжные системы
+
+## Этап 7
+- [ ] docs/AUTH.md — OAuth, сессии
+
+## Этап 8
+- [ ] docs/INTEGRATIONS.md — Telegram, Email, доставка
+
+## Этап 9
+- [ ] docs/DEPLOYMENT.md — production
+- [ ] docs/PRODUCTION.md — мониторинг, бэкапы
 ```
 
 ---
 
-## **СТАТУС РАЗРАБОТКИ НА ДАННЫЙ МОМЕНТ:**
+# **ЧАСТЬ 9. АДАПТИВНОСТЬ И КРОССБРАУЗЕРНОСТЬ**
 
-### **✅ Выполнено:**
-- [x] Новая архитектура спроектирована и реализована
-- [x] Docker окружение настроено (PostgreSQL + Redis)
-- [x] Next.js API разработано с Prisma ORM
-- [x] React Admin админ-панель создана
-- [x] Middleware безопасности реализован
-- [x] Тестовые данные добавлены в БД
-- [x] Все публичные API эндпоинты работают
-- [x] Защищенные эндпоинты по IP работают
+## **9.1. Breakpoints (контрольные точки)**
 
-### **⏳ В процессе:**
-- [ ] Настройка компонентов React Admin
-- [ ] Обновление фронтенда для работы с новым API
-- [ ] 3D модели и анимации
-- [ ] SEO компоненты и разметка
+```typescript
+const breakpoints = {
+  // Мобильные
+  xs: 320,    // Маленькие смартфоны (landscape)
+  sm: 480,    // Смартфоны
+  
+  // Планшеты
+  md: 768,    // Планшеты (portrait)
+  lg: 1024,   // Планшеты (landscape) / маленькие ноутбуки
+  
+  // Десктопы
+  xl: 1440,   // Ноутбуки / десктопы
+  '2xl': 1920, // Большие десктопы
+  '3xl': 2560, // 2K мониторы
+};
+```
 
-### **📋 План работ:**
-1. **Завершить админку** - кастомные компоненты для управления
-2. **Обновить фронтенд** - новые API эндпоинты вместо Strapi
-3. **Добавить 3D** - модели гриндеров и анимации
-4. **Настроить VPS** - полное развертывание
-5. **SEO оптимизация** - мета-теги и Schema.org разметка
+## **9.2. Адаптивная сетка**
+
+### **CSS Grid + Flexbox подход:**
+
+```css
+/* Базовая сетка */
+.container {
+  display: grid;
+  gap: 1rem;
+  
+  /* Мобильные: 1 колонка */
+  grid-template-columns: 1fr;
+  
+  /* Планшеты: 2 колонки */
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* Десктопы: 3-4 колонки */
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (min-width: 1440px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Гибкие изображения */
+img {
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+```
+
+## **9.3. Адаптивная типографика**
+
+```css
+/* Жидкая типография */
+html {
+  font-size: clamp(14px, 2vw, 18px);
+}
+
+h1 {
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+/* Адаптивные отступы */
+.section {
+  padding: clamp(1rem, 3vw, 3rem);
+}
+```
+
+## **9.4. Адаптивные изображения**
+
+```html
+<!-- Srcset для разных разрешений -->
+<img
+  src="image-800.jpg"
+  srcset="
+    image-400.jpg 400w,
+    image-800.jpg 800w,
+    image-1200.jpg 1200w,
+    image-1600.jpg 1600w
+  "
+  sizes="
+    (max-width: 480px) 100vw,
+    (max-width: 1024px) 50vw,
+    33vw
+  "
+  alt="Описание"
+  loading="lazy"
+/>
+
+<!-- Picture для арт-направления -->
+<picture>
+  <source media="(max-width: 480px)" srcset="mobile.jpg" />
+  <source media="(max-width: 1024px)" srcset="tablet.jpg" />
+  <img src="desktop.jpg" alt="Описание" />
+</picture>
+```
+
+## **9.5. Кроссбраузерность**
+
+### **Поддерживаемые браузеры (матрица поддержки):**
+
+| Функция | Chrome 88+ | Firefox 85+ | Safari 14+ | Edge 88+ | IE 11 |
+|---------|------------|-------------|------------|----------|-------|
+| CSS Grid | ✅ | ✅ | ✅ | ✅ | ⚠️ (fallback) |
+| Flexbox | ✅ | ✅ | ✅ | ✅ | ⚠️ (частично) |
+| CSS Custom Properties | ✅ | ✅ | ✅ | ✅ | ❌ |
+| WebP | ✅ | ✅ | ✅ | ✅ | ❌ |
+| WebGL 2.0 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| ES6 Modules | ✅ | ✅ | ✅ | ✅ | ⚠️ |
+| Intersection Observer | ✅ | ✅ | ✅ | ✅ | ❌ |
+
+### **Стратегии поддержки старых браузеров:**
+
+```typescript
+// 1. Progressive Enhancement
+const features = {
+  // Базовые (работают везде)
+  base: {
+    html: true,
+    css: true,
+    images: true,
+    forms: true,
+  },
+  
+  // Улучшенные (требуют поддержки)
+  enhanced: {
+    cssGrid: 'modern',
+    webp: 'modern',
+    webgl: 'modern',
+  },
+  
+  // Продвинутые (только новые браузеры)
+  advanced: {
+    webgl2: 'latest',
+    webgpu: 'experimental',
+  },
+};
+
+// 2. Feature Detection
+if ('WebGL2RenderingContext' in window) {
+  // Используем WebGL 2
+  initWebGL2();
+} else if ('WebGLRenderingContext' in window) {
+  // Fallback на WebGL 1
+  initWebGL1();
+} else {
+  // Fallback на статичное изображение
+  showStaticImage();
+}
+
+// 3. Polyfills
+import('intersection-observer/polyfill')
+  .then(() => initLazyLoading());
+```
+
+## **9.6. 3D Fallback стратегия**
+
+```typescript
+// Определение возможностей WebGL
+function detectWebGLCapabilities() {
+  const canvas = document.createElement('canvas');
+  const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+  
+  if (!gl) {
+    return {
+      supported: false,
+      level: 'none',
+      fallback: 'static-image',
+    };
+  }
+  
+  const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+  
+  // Проверка производительности
+  const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+  const maxVertexAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+  
+  let level: 'high' | 'medium' | 'low' = 'high';
+  
+  if (maxTextureSize < 2048 || maxVertexAttribs < 8) {
+    level = 'low';
+  } else if (maxTextureSize < 4096) {
+    level = 'medium';
+  }
+  
+  return {
+    supported: true,
+    level,
+    maxTextureSize,
+    renderer,
+    fallback: level === 'low' ? 'simplified-3d' : 'full-3d',
+  };
+}
+
+// Уровни 3D рендеринга
+const renderLevels = {
+  // Полный функционал
+  'full-3d': {
+    shadows: true,
+    reflections: true,
+    aa: 'fxaa',
+    textures: '2k',
+    lod: 'high',
+    fps: 60,
+  },
+  
+  // Упрощённый
+  'simplified-3d': {
+    shadows: false,
+    reflections: false,
+    aa: 'none',
+    textures: '512',
+    lod: 'low',
+    fps: 30,
+  },
+  
+  // Статичное изображение
+  'static-image': {
+    type: 'pre-rendered',
+    format: 'webp',
+    interactive: false,
+  },
+};
+```
+
+## **9.7. Тестирование на устройствах**
+
+### **Минимальный набор для тестирования:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Устройства для тестирования                            │
+├─────────────────────────────────────────────────────────┤
+│  📱 Смартфоны                                           │
+│     ├── iPhone SE (4.7", 320px)                        │
+│     ├── iPhone 15 (6.1", 390px)                        │
+│     ├── Samsung Galaxy S23 (6.1", 360px)               │
+│     └── Google Pixel 8 (6.2", 393px)                   │
+│                                                         │
+│  📱 Планшеты                                            │
+│     ├── iPad Mini (7.9", 768px)                        │
+│     ├── iPad Air (10.9", 820px)                        │
+│     └── Samsung Galaxy Tab S9 (11", 844px)             │
+│                                                         │
+│  💻 Десктопы                                            │
+│     ├── 1366x768 (ноутбуки)                            │
+│     ├── 1920x1080 (Full HD)                            │
+│     └── 2560x1440 (2K)                                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Инструменты тестирования:**
+
+- **BrowserStack** - облачное тестирование на реальных устройствах
+- **Sauce Labs** - автоматизированное тестирование
+- **LambdaTest** - кроссбраузерное тестирование
+- **Chrome DevTools** - эмуляция устройств
+- **Lighthouse** - аудит производительности
 
 ---
 
-**Проект полностью переписан на современную архитектуру Next.js + PostgreSQL + React Admin с сохранением всех функциональных требований и полным SEO разделом!** 🚀
+# **ЧАСТЬ 10. ТРЕБОВАНИЯ К ПРОИЗВОДИТЕЛЬНОСТИ**
+
+## **10.1. 3D производительность**
+
+| Метрика | Значение | Приоритет |
+|---------|----------|-----------|
+| FPS (desktop) | 60+ | Высокий |
+| FPS (mobile) | 30+ | Высокий |
+| Время загрузки сцены | < 3с | Высокий |
+| Размер 3D моделей | < 5MB | Средний |
+| Количество draw calls | < 100 | Средний |
+
+## **9.2. Web Vitals**
+
+| Метрика | Цель | Порог |
+|---------|------|-------|
+| LCP | < 2.5с | 4с |
+| FID | < 100мс | 300мс |
+| CLS | < 0.1 | 0.25 |
+| TTI | < 3.5с | 5с |
+
+## **9.3. Оптимизация**
+
+```typescript
+// Стратегии оптимизации
+const optimizationStrategies = {
+  // Изображения
+  images: {
+    format: ['webp', 'avif'],
+    lazyLoading: true,
+    responsive: true,
+  },
+  
+  // 3D модели
+  models3D: {
+    lod: true,
+    draco: true,            // Сжатие геометрии
+    basis: true,            // Сжатие текстур
+    instancing: true,       // Для повторяющихся объектов
+  },
+  
+  // Код
+  code: {
+    codeSplitting: true,
+    treeShaking: true,
+    dynamicImport: true,
+  },
+  
+  // Кэширование
+  caching: {
+    redis: true,
+    swr: true,
+    serviceWorker: true,
+  },
+};
+```
+
+---
+
+# **ЧАСТЬ 10. БЕЗОПАСНОСТЬ**
+
+## **10.1. Аутентификация и авторизация**
+
+- JWT токены с коротким временем жизни
+- Refresh токены с ротацией
+- Rate limiting для API
+- CSRF защита
+- CORS настройки
+
+## **10.2. Платежная безопасность**
+
+- PCI DSS compliance
+- Токенизация карт
+- 3D Secure
+- Фрод-мониторинг
+- Логирование транзакций
+
+## **10.3. Защита данных**
+
+- Шифрование чувствительных да��н��х
+- HTTPS обязательно
+- Защита от XSS
+- Защит�� от SQL injection
+- Валидация всех входов
+
+---
+
+# **ЧАСТЬ 11. МОНИТОРИНГ И АНАЛИТИКА**
+
+## **11.1. Технический мониторинг**
+
+- Sentry для ошибок
+- UptimeRobot для доступности
+- Prometheus + Grafana для метрик
+- Log aggregation (ELK stack)
+
+## **11.2. Бизнес-аналитика**
+
+- Google Analytics 4
+- Яндекс.Метрика
+- E-commerce трекинг
+- Конверсионные воронки
+- Cohort analysis
+
+## **11.3. Пользовательская аналитика**
+
+- Hotjar для тепловых карт
+- Session recording
+- A/B тестирование
+- Опросы и feedback
+
+---
+
+# **ЧАСТЬ 12. КОМПЛЕКСНАЯ СИСТЕМА ТЕСТИРОВАНИЯ**
+
+## **12.1. Архитектура тестирования**
+
+### **Уровни тестирования (Testing Pyramid):**
+
+```
+                    ┌─────────────┐
+                    │   E2E       │  10% - Сквозные тесты
+                    │   Tests     │  (Playwright/Cypress)
+                    └─────────────┘
+                 ┌───────────────────┐
+                 │  Integration      │  20% - Интеграционные тесты
+                 │  Tests            │  (API, Database, Services)
+                 └───────────────────┘
+              ┌─────────────────────────┐
+              │      Unit Tests         │  70% - Модульные тесты
+              │  (Vitest, Jest)         │  (Компоненты, функции, утилиты)
+              └─────────────────────────┘
+```
+
+### **Типы тестирования по этапам:**
+
+| Тип тестирования | Инструменты | Покрытие | Автоматизация |
+|-----------------|-------------|----------|---------------|
+| **Unit** | Vitest, Jest | 80%+ кода | ✅ CI/CD |
+| **Integration** | Vitest, Supertest | 70%+ API | ✅ CI/CD |
+| **E2E** | Playwright, Cypress | Критические пути | ✅ CI/CD |
+| **Визуальное** | Percy, Chromatic | UI компоненты | ✅ CI/CD |
+| **Нагрузочное** | k6, Artillery | API endpoints | ⚠️ По требованию |
+| **Кроссбраузерное** | BrowserStack | Все браузеры | ⚠️ Ручное + Auto |
+| **Мобильное** | Device Lab | 10+ устройств | ⚠️ Ручное |
+| **3D производительность** | WebGL Profiler | 3D сцена | ⚠️ Ручное |
+| **Безопасность** | OWASP ZAP | Уязвимости | ⚠️ По требованию |
+| **Доступность** | axe-core, WAVE | WCAG 2.1 AA | ✅ CI/CD |
+
+---
+
+## **12.2. Стратегия тестирования для каждого этапа**
+
+### **ЭТАП 0: Базовая инфраструктура**
+
+```typescript
+interface Stage0Testing {
+  // Что тестировать
+  scope: {
+    docker: {
+      containers: ['postgres', 'redis', 'nginx'];
+      checks: [
+        'Контейнеры запускаются без ошибок',
+        'PostgreSQL принимает подключения',
+        'Redis кэширует данные',
+        'Nginx проксирует запросы',
+        'Docker Compose поднимает все сервисы'
+      ];
+    };
+    database: {
+      checks: [
+        'Миграции Prisma применяются успешно',
+        'Схема БД соответствует schema.prisma',
+        'Seed данные загружаются',
+        'Индексы созданы корректно',
+        'Foreign keys работают'
+      ];
+    };
+    api: {
+      endpoints: string[];
+      checks: [
+        'API endpoints возвращают 200 OK',
+        'Ответы валидного JSON формата',
+        'CORS заголовки настроены',
+        'Rate limiting работает',
+        'Middleware безопасности активны'
+      ];
+    };
+    admin: {
+      checks: [
+        'React Admin загружается',
+        'Аутентификация работает',
+        'CRUD компоненты отображаются',
+        'Данные из БД читаются'
+      ];
+    };
+  };
+
+  // Методы тестирования
+  methods: {
+    manual: [
+      'docker-compose up -d && проверка логов',
+      'pg_isready - проверка PostgreSQL',
+      'redis-cli ping - проверка Redis',
+      'curl http://localhost:3000/api/health - API check',
+      'Открытие админки в браузере'
+    ];
+    automated: [
+      'docker-compose config - валидация конфигурации',
+      'prisma migrate status - статус миграций',
+      'npm run test:api - API тесты',
+      'Playwright - e2e тесты базовые'
+    ];
+  };
+
+  // Критерии приёмки
+  acceptanceCriteria: [
+    'Все контейнеры в статусе "healthy"',
+    'API health endpoint возвращает 200',
+    'Миграции применены без ошибок',
+    'Админка загружается за < 3 секунд',
+    'Нет критических ошибок в логах'
+  ];
+}
+```
+
+**Чек-лист тестирования Этапа 0:**
+
+```markdown
+## Инфраструктура
+- [ ] `docker-compose up -d` выполняется без ошибок
+- [ ] `docker-compose ps` показывает все контейнеры в статусе "healthy"
+- [ ] PostgreSQL: `docker-compose exec postgres pg_isready` → готов
+- [ ] Redis: `docker-compose exec redis redis-cli ping` → PONG
+- [ ] Nginx: `curl -I http://localhost` → 200 OK
+
+## База данных
+- [ ] `npx prisma migrate status` → migrations applied
+- [ ] `npx prisma db seed` → seed данные загружены
+- [ ] `docker-compose exec postgres psql -U postgres -c "SELECT * FROM users LIMIT 1;"` → данные есть
+
+## API
+- [ ] `curl http://localhost:3000/api/health` → {"status": "ok"}
+- [ ] `curl http://localhost:3000/api/products` → массив товаров
+- [ ] `curl http://localhost:3000/api/categories` → массив категорий
+- [ ] CORS заголовки: `Access-Control-Allow-Origin` присутствует
+
+## Админка
+- [ ] http://localhost:3001/admin → загружается
+- [ ] Логин/пароль → вход успешен
+- [ ] Список товаров → отображается
+- [ ] CRUD операции → работают
+
+## Производительность
+- [ ] Время загрузки админки < 3с
+- [ ] Время ответа API < 200мс
+- [ ] Нет утечек памяти (проверка через Docker stats)
+```
+
+---
+
+### **ЭТАП 1: Улучшение базового функционала**
+
+```typescript
+interface Stage1Testing {
+  // CRUD товаров
+  productCRUD: {
+    unit: {
+      tool: 'Vitest';
+      tests: [
+        'validateProductData() - валидация данных товара',
+        'calculatePrice() - расчёт цены со скидкой',
+        'generateSlug() - генерация URL-слага',
+        'formatAttributes() - форматирование характеристик'
+      ];
+      coverage: '90%+';
+    };
+    integration: {
+      tool: 'Vitest + Supertest';
+      tests: [
+        'POST /api/products - создание товара',
+        'GET /api/products/:id - получение товара',
+        'PUT /api/products/:id - обновление товара',
+        'DELETE /api/products/:id - удаление товара',
+        'GET /api/products - пагинация и фильтры'
+      ];
+    };
+    e2e: {
+      tool: 'Playwright';
+      scenarios: [
+        'Админ создаёт товар через админку',
+        'Админ редактирует товар',
+        'Админ удаляет товар',
+        'Товар отображается на фронтенде'
+      ];
+    };
+  };
+
+  // Загрузка изображений
+  imageUpload: {
+    tests: [
+      'Загрузка одного изображения',
+      'Загрузка нескольких изображений',
+      'Валидация формата (jpg, png, webp)',
+      'Валидация размера (< 5MB)',
+      'Оптимизация изображений (resize, compress)',
+      'Генерация thumbnail',
+      'Хранение в S3/MinIO'
+    ];
+  };
+
+  // Лендинги
+  landingPages: {
+    visual: {
+      tool: 'Percy';
+      tests: [
+        'Лендинг "Продажа гриндеров" - desktop',
+        'Лендинг "Продажа гриндеров" - mobile',
+        'Лендинг "Ремонт оборудования" - desktop',
+        'Лендинг "Ремонт оборудования" - mobile'
+      ];
+    };
+    accessibility: {
+      tool: 'axe-core';
+      standard: 'WCAG 2.1 AA';
+      tests: [
+        'ALT текст у всех изображений',
+        'Контрастность цветов ≥ 4.5:1',
+        'Клавиатурная навигация',
+        'ARIA labels у интерактивных элементов'
+      ];
+    };
+  };
+
+  // Безопасность
+  security: {
+    tests: [
+      'IP whitelist - доступ с разрешённых IP',
+      'IP whitelist - блокировка с запрещённых IP',
+      'JWT token - валидный токен',
+      'JWT token - истёкший токен',
+      'JWT token - невалидная подпись',
+      'Rate limiting - 100 запросов/мин',
+      'CORS - только разрешённые домены'
+    ];
+  };
+}
+```
+
+**Чек-лист тестирования Этапа 1:**
+
+```markdown
+## CRUD товаров
+- [ ] Unit тесты: `npm run test:unit` → 90%+ покрытие
+- [ ] Integration тесты: `npm run test:integration` → все проходят
+- [ ] E2E: `npm run test:e2e` → сценарии работают
+
+## Загрузка изображений
+- [ ] Загрузка jpg/png/webp до 5MB
+- [ ] Автоматическая генерация thumbnail
+- [ ] Оптимизация (сжатие до 80%)
+- [ ] Хранение в S3/MinIO
+
+## Лендинги
+- [ ] Визуальные тесты: Percy → нет различий
+- [ ] Доступность: axe-core → 0 нарушений
+- [ ] Адаптивность: 320px - 1920px → всё работает
+- [ ] Производительность: Lighthouse → 90+
+
+## Безопасность
+- [ ] IP whitelist работает
+- [ ] JWT аутентификация работает
+- [ ] Rate limiting активен
+- [ ] CORS настроен корректно
+```
+
+---
+
+### **ЭТАП 2: Адаптивность и кроссбраузерность**
+
+```typescript
+interface Stage2Testing {
+  // Адаптивность
+  responsive: {
+    breakpoints: {
+      xs: 320;   // iPhone SE
+      sm: 480;   // Смартфоны
+      md: 768;   // Планшеты
+      lg: 1024;  // Планшеты landscape
+      xl: 1440;  // Ноутбуки
+      '2xl': 1920; // Десктопы
+    };
+    tests: {
+      visual: 'Скриншот-тесты на каждом breakpoint',
+      layout: 'Проверка сеток (Grid/Flexbox)',
+      typography: 'Читаемость шрифтов',
+      images: 'Адаптивные изображения (srcset)',
+      navigation: 'Мобильное меню (burger)',
+      touch: 'Touch-friendly элементы (≥ 44px)'
+    };
+  };
+
+  // Кроссбраузерность
+  crossBrowser: {
+    browsers: {
+      chrome: '88+';
+      firefox: '85+';
+      safari: '14+';
+      edge: '88+';
+      opera: '74+';
+      yandex: '21+';
+    };
+    tests: {
+      functional: 'Все функции работают во всех браузерах',
+      visual: 'Визуальные различия < 5%',
+      performance: 'Lighthouse score > 85 во всех',
+      fallbacks: '3D fallback для старых браузеров'
+    };
+    tools: [
+      'BrowserStack - реальные устройства',
+      'LambdaTest - кроссбраузерное',
+      'Chrome DevTools - эмуляция'
+    ];
+  };
+
+  // 3D Fallback
+  fallback3D: {
+    detection: 'Feature detection WebGL/WebGL2',
+    levels: {
+      full: 'WebGL2 + все функции',
+      simplified: 'WebGL1 + упрощённая сцена',
+      static: 'Статичное изображение'
+    };
+    tests: [
+      'WebGL2 не поддерживается → WebGL1 fallback',
+      'WebGL не поддерживается → статичное изображение',
+      'Низкая производительность → упрощённая сцена'
+    ];
+  };
+}
+```
+
+**Чек-лист тестирования Этапа 2:**
+
+```markdown
+## Адаптивность
+- [ ] 320px (iPhone SE) → всё читаемо, кнопки ≥ 44px
+- [ ] 480px (Смартфоны) → 1 колонка товаров
+- [ ] 768px (Планшеты) → 2 колонки товаров
+- [ ] 1024px (Планшеты landscape) → 3 колонки
+- [ ] 1440px (Ноутбуки) → 4 колонки
+- [ ] 1920px (Десктоп) → полная версия
+
+## Кроссбраузерность
+- [ ] Chrome 88+ → все функции работают
+- [ ] Firefox 85+ → все функции работают
+- [ ] Safari 14+ → все функции работают
+- [ ] Edge 88+ → все функции работают
+- [ ] Opera 74+ → все функции работают
+- [ ] Яндекс.Браузер 21+ → все функции работают
+
+## 3D Fallback
+- [ ] WebGL2 → полный функционал (60 FPS)
+- [ ] WebGL1 → упрощённая сцена (30 FPS)
+- [ ] Нет WebGL → статичное изображение
+
+## Производительность
+- [ ] Lighthouse Mobile → 90+
+- [ ] Lighthouse Desktop → 90+
+- [ ] LCP < 2.5с
+- [ ] FID < 100мс
+- [ ] CLS < 0.1
+```
+
+---
+
+### **ЭТАП 3: 3D Конструктор (базовая версия)**
+
+```typescript
+interface Stage3Testing {
+  // 3D сцена
+  scene3D: {
+    performance: {
+      fps: {
+        desktop: '60+ FPS';
+        tablet: '30+ FPS';
+        mobile: '30+ FPS';
+      };
+      loadTime: '< 3 секунд';
+      memory: '< 256MB';
+      drawCalls: '< 100';
+      triangles: '< 500K';
+    };
+    visual: {
+      quality: {
+        lighting: 'Корректное освещение',
+        shadows: 'Тени отображаются',
+        materials: 'Материалы выглядят реалистично',
+        textures: 'Текстуры без артефактов'
+      };
+    };
+  };
+
+  // Компоненты
+  components: {
+    loading: {
+      tests: [
+        'Загрузка .glb/.gltf моделей',
+        'Draco сжатие работает',
+        'Basis сжатие текстур',
+        'LOD переключается корректно'
+      ];
+    };
+    mounting: {
+      tests: [
+        'Точки крепления отображаются',
+        'Компонент snap к mount point',
+        'Проверка совместимости',
+        'Подсветка выбранного компонента'
+      ];
+    };
+  };
+
+  // Камера
+  camera: {
+    controls: {
+      orbit: 'Вращение вокруг центра',
+      zoom: 'Приближение/отдаление',
+      pan: 'Перемещение',
+      presets: 'Front, Side, Top, Isometric'
+    };
+    tests: [
+      'Orbit работает плавно',
+      'Zoom не проходит сквозь объекты',
+      'Pan перемещает сцену',
+      'Presets переключают камеру'
+    ];
+  };
+
+  // Взаимодействие
+  interaction: {
+    tests: [
+      'Клик выбирает компонент',
+      'Hover подсвечивает компонент',
+      'Панель выбранных компонентов обновляется',
+      'Цена обновляется в реальном времени',
+      'Сохранение конфигурации в JSON'
+    ];
+  };
+}
+```
+
+**Чек-лист тестирования Этапа 3:**
+
+```markdown
+## 3D Сцена
+- [ ] Загрузка сцены < 3с
+- [ ] FPS desktop → 60+
+- [ ] FPS tablet → 30+
+- [ ] FPS mobile → 30+
+- [ ] Draw calls < 100
+- [ ] Память < 256MB
+
+## Компоненты
+- [ ] .glb/.gltf модели загружаются
+- [ ] Draco сжатие работает
+- [ ] LOD переключается
+- [ ] Mount points отображаются
+- [ ] Snap к точкам работает
+- [ ] Совместимость проверяется
+
+## Камера
+- [ ] Orbit вращение
+- [ ] Zoom работает
+- [ ] Pan перемещение
+- [ ] Presets переключаются
+
+## Взаимодействие
+- [ ] Клик → выбор компонента
+- [ ] Hover → подсветка
+- [ ] Цена обновляется
+- [ ] Сохранение в JSON
+```
+
+---
+
+### **ЭТАП 4: Продвинутые анимации конструктора**
+
+```typescript
+interface Stage4Testing {
+  // Анимации
+  animations: {
+    unscrew: {
+      phases: ['vibration', 'bolt_rotation', 'bolt_lift'];
+      duration: '1100ms';
+      tests: [
+        'Вибрация 200ms, amplitude 0.5mm',
+        'Вращение болта 3 оборота',
+        'Подъём болта с резьбой 10mm',
+        'Звук отвинчивани�� (опционально)'
+      ];
+    };
+    remove: {
+      phases: ['detach', 'flyOut', 'fadeOut'];
+      duration: '1400ms';
+      tests: [
+        'Отсоединение 20mm',
+        'Полёт за край экрана по дуге',
+        'Вращение и уменьшение',
+        'Fade out у края'
+      ];
+    };
+    add: {
+      phases: ['flyIn', 'position', 'descend', 'snap'];
+      duration: '1650ms';
+      tests: [
+        'Появление из-за края',
+        'Полёт к точке крепления',
+        'Позиционирование и покачивание',
+        'Prимагничивание (snap)'
+      ];
+    };
+    screw: {
+      phases: ['positionBolt', 'insert', 'tightening', 'finalTighten'];
+      duration: '1150ms';
+      tests: [
+        'Появление болта',
+        'Опускание в отверстие',
+        'Вращение с погружением',
+        'Финальная затяжка с щелчком'
+      ];
+    };
+    replace: {
+      totalDuration: '3000ms';
+      tests: [
+        'Удаление старого компонента',
+        'Пауза 300ms',
+        'Добавление нового компонента'
+      ];
+    };
+  };
+
+  // Физика
+  physics: {
+    tests: [
+      'Обнаружение столкновений',
+      'Гравитация для падающих деталей',
+      'Точная резьба болтов',
+      'Реалистичное движение'
+    ];
+  };
+
+  // Эффекты
+  effects: {
+    tests: [
+      'Motion blur в движении',
+      'Depth of field',
+      'Ambient occlusion',
+      'Highlights активных зон',
+      'Тени в реальном времени'
+    ];
+  };
+
+  // Производительность
+  performance: {
+    fps: '60+ desktop, 30+ mobile';
+    memory: '< 512MB';
+    tests: [
+      'Анимации плавные (без рывков)',
+      'Нет просадок FPS',
+      'Память не утекает'
+    ];
+  };
+
+  // Доступность
+  accessibility: {
+    tests: [
+      'Reduced motion режим',
+      'Возможность пропуска анимации',
+      'Настройка длительности'
+    ];
+  };
+}
+```
+
+**Чек-лист тестирования Этапа 4:**
+
+```markdown
+## Анимации
+- [ ] Unscrew (1100ms) → все фазы работают
+- [ ] Remove (1400ms) → полёт за край
+- [ ] Add (1650ms) → прилет и snap
+- [ ] Screw (1150ms) → вращение с погружением
+- [ ] Replace (3000ms) → комбинация
+
+## Физика
+- [ ] Collision detection
+- [ ] Гравитация
+- [ ] Точная резьба
+- [ ] Реалистичное движение
+
+## Эффекты
+- [ ] Motion blur
+- [ ] Depth of field
+- [ ] Ambient occlusion
+- [ ] Highlights
+- [ ] Shadows
+
+## Производительность
+- [ ] FPS desktop → 60+
+- [ ] FPS mobile → 30+
+- [ ] Память < 512MB
+- [ ] Нет утечек
+
+## Доступность
+- [ ] Reduced motion
+- [ ] Skip animation
+- [ ] Настройка длительности
+```
+
+---
+
+### **ЭТАП 5: Интернет-магазин**
+
+```typescript
+interface Stage5Testing {
+  // Каталог
+  catalog: {
+    tests: [
+      'Сетка товаров отображается',
+      'Фильтры работают (цена, категория, бренд)',
+      'Сортировка (цена, популярность, новизна)',
+      'Поиск по товарам',
+      'Пагинация',
+      'Быстрый просмотр (modal)'
+    ];
+  };
+
+  // Карточка товара
+  productCard: {
+    tests: [
+      'Галерея изображений (свайп/клик)',
+      '3D модель (если есть)',
+      'Характеристики отображаются',
+      'Выбор количества',
+      'Кнопка "В корзину"',
+      'Наличие на складе'
+    ];
+  };
+
+  // Корзина
+  cart: {
+    tests: [
+      'Добавление товара',
+      'Удаление товара',
+      'Изменение количества',
+      'Промокод (валидация, применение)',
+      'Расчёт доставки',
+      'Сохранение для позже',
+      'Сохранение между сессиями'
+    ];
+  };
+
+  // Checkout
+  checkout: {
+    tests: [
+      'Форма данных покупателя',
+      'Валидация полей',
+      'Выбор способа доставки',
+      'Выбор способа оплаты',
+      'Комментарий к заказу',
+      'Подтверждение заказа',
+      'Создание заказа в БД',
+      'Email подтверждение'
+    ];
+  };
+
+  // Личный кабинет
+  account: {
+    tests: [
+      'История заказов',
+      'Статусы заказов',
+      'Избранное',
+      'Сохранённые конфигурации',
+      'Настройки профиля'
+    ];
+  };
+}
+```
+
+**Чек-лист тестирования Этапа 5:**
+
+```markdown
+## Каталог
+- [ ] Сетка товаров
+- [ ] Фильтры
+- [ ] Сортировка
+- [ ] Поиск
+- [ ] Пагинация
+
+## Карточка товара
+- [ ] Галерея
+- [ ] 3D модель
+- [ ] Характеристики
+- [ ] В корзину
+
+## Корзина
+- [ ] Добавление/удаление
+- [ ] Количество
+- [ ] Промокод
+- [ ] Доставка
+- [ ] Сохранение
+
+## Checkout
+- [ ] Форма
+- [ ] Валидация
+- [ ] Доставка
+- [ ] Оплата
+- [ ] Подтверждение
+
+## Личный кабинет
+- [ ] История
+- [ ] Избранное
+- [ ] Конфигурации
+```
+
+---
+
+### **ЭТАП 6: Онлайн-оплата**
+
+```typescript
+interface Stage6Testing {
+  // Платёжные системы
+  paymentSystems: {
+    cloudpayments: {
+      tests: [
+        'Инициализация виджета',
+        'Оплата картой',
+        'СБП',
+        '3D Secure',
+        'Webhook подтверждения',
+        'Рефанды'
+      ];
+    };
+    yookassa: {
+      tests: [
+        'Яндекс Пэй',
+        'СберПэй',
+        'Mir Pay',
+        'Webhook',
+        'Рефанды'
+      ];
+    };
+  };
+
+  // Безопасность
+  security: {
+    tests: [
+      'PCI DSS compliance',
+      'Токенизация карт',
+      'Шифрование данных',
+      'Фрод-мониторинг',
+      'Логирование транзакций'
+    ];
+  };
+
+  // Сценарии
+  scenarios: {
+    tests: [
+      'Успешная оплата',
+      'Отмена оплаты',
+      'Ошибка оплаты',
+      'Повторная попытка',
+      'Частичная оплата',
+      'Рефанд (полный/частичный)'
+    ];
+  };
+}
+```
+
+**Чек-лист тестирования Этапа 6:**
+
+```markdown
+## Платёжные системы
+- [ ] CloudPayments → оплата работает
+- [ ] ЮKassa → оплата работает
+- [ ] 3D Secure → работает
+- [ ] Webhooks → приходят
+
+## Безопасность
+- [ ] PCI DSS → compliance
+- [ ] Токенизация → работает
+- [ ] Шифрование → активно
+
+## Сценарии
+- [ ] Успешная оплата
+- [ ] Отмена
+- [ ] Ошибка
+- [ ] Повтор
+- [ ] Частичная
+- [ ] Рефанд
+```
+
+---
+
+### **ЭТАП 7: Авторизация (OAuth)**
+
+```typescript
+interface Stage7Testing {
+  // OAuth провайдеры
+  oauth: {
+    google: {
+      tests: [
+        'OAuth 2.0 flow',
+        'Получение email',
+        'Создание/обновление пользователя',
+        'Связывание с локальным аккаунтом'
+      ];
+    };
+    yandex: {
+      tests: [
+        'OAuth 2.0 flow',
+        'Получение email',
+        'Создание/обновление'
+      ];
+    };
+    telegram: {
+      tests: [
+        'Telegram Login Widget',
+        'Получение username',
+        'Создание/обновление'
+      ];
+    };
+  };
+
+  // Сессии
+  sessions: {
+    tests: [
+      'JWT token выдаётся',
+      'Refresh token работает',
+      'Сессия продлевается',
+      'Logout уничтожает сессию'
+    ];
+  };
+
+  // История
+  history: {
+    tests: [
+      'История просмотров сохраняется',
+      'История заказов',
+      'Избранное'
+    ];
+  };
+}
+```
+
+---
+
+### **ЭТАП 8: Интеграции и уведомления**
+
+```typescript
+interface Stage8Testing {
+  // Telegram
+  telegram: {
+    tests: [
+      'Бот запускается',
+      'Команды работают (/start, /catalog, /order)',
+      'Уведомления приходят',
+      'Заказы отправляются',
+      'Webhook работает'
+    ];
+  };
+
+  // Email
+  email: {
+    tests: [
+      'SMTP подключение',
+      'Шаблоны писем',
+      'Отправка подтверждений',
+      'Delivery rate'
+    ];
+  };
+
+  // Доставка
+  shipping: {
+    cdek: 'API интеграция',
+    boxberry: 'API интеграция',
+    pochta: 'API интеграция'
+  };
+
+  // Аналитика
+  analytics: {
+    tests: [
+      'Google Analytics 4 → события',
+      'Яндекс.Метрика → цели',
+      'E-commerce трекинг',
+      'Дашборды'
+    ];
+  };
+}
+```
+
+---
+
+### **ЭТАП 9: Тестирование и запуск**
+
+```typescript
+interface Stage9Testing {
+  // Функциональное
+  functional: {
+    unit: {
+      tool: 'Vitest';
+      coverage: '80%+';
+      scope: ['Компоненты', 'Функции', 'Утилиты', 'Хуки'];
+    };
+    integration: {
+      tool: 'Vitest + Supertest';
+      coverage: '70%+';
+      scope: ['API', 'Database', 'Services'];
+    };
+    e2e: {
+      tool: 'Playwright';
+      coverage: 'Критические пути';
+      scenarios: [
+        'Покупка товара',
+        'Сборка гриндера',
+        'Оплата заказа',
+        'Личный кабинет'
+      ];
+    };
+  };
+
+  // Нагрузочное
+  load: {
+    tool: 'k6';
+    scenarios: {
+      smoke: '10 пользователей, 1 мин',
+      load: '100 пользователей, 5 мин',
+      stress: '500 пользователей, 10 мин',
+      spike: '1000 пользователей, 1 мин'
+    };
+    metrics: {
+      rps: '> 100 запросов/сек';
+      p95: '< 500мс';
+      p99: '< 1000мс';
+      errorRate: '< 1%';
+    };
+  };
+
+  // SEO
+  seo: {
+    tests: [
+      'Meta теги',
+      'Schema.org',
+      'Sitemap.xml',
+      'Robots.txt',
+      'JSON-LD',
+      'Open Graph'
+    ];
+  };
+
+  // Документация
+  documentation: {
+    tests: [
+      'API документация',
+      'Инструкция админки',
+      'Руководство развёртывания',
+      'SEO руководство'
+    ];
+  };
+
+  // Production
+  production: {
+    tests: [
+      'VPS настройка',
+      'SSL сертификаты',
+      'CDN (Cloudflare)',
+      'Бэкапы',
+      'Мониторинг'
+    ];
+  };
+}
+```
+
+**Чек-лист тестирования Этапа 9:**
+
+```markdown
+## Функциональное
+- [ ] Unit тесты → 80%+ покрытие
+- [ ] Integration тесты → 70%+ покрытие
+- [ ] E2E тесты → критические пути
+
+## Нагрузочное
+- [ ] Smoke → 10 users, 1 мин
+- [ ] Load → 100 users, 5 мин
+- [ ] Stress → 500 users, 10 мин
+- [ ] Spike → 1000 users, 1 мин
+- [ ] RPS > 100
+- [ ] p95 < 500мс
+- [ ] p99 < 1000мс
+- [ ] Error rate < 1%
+
+## SEO
+- [ ] Meta теги
+- [ ] Schema.org
+- [ ] Sitemap.xml
+- [ ] Robots.txt
+- [ ] JSON-LD
+
+## Документация
+- [ ] API документация
+- [ ] Инструкция админки
+- [ ] Руководство развёртывания
+- [ ] SEO руководство
+
+## Production
+- [ ] VPS
+- [ ] SSL
+- [ ] CDN
+- [ ] Бэкапы
+- [ ] Мониторинг
+```
+
+---
+
+## **12.3. Автоматизация тестирования (CI/CD)**
+
+### **GitHub Actions Workflow:**
+
+```yaml
+name: Testing Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # Unit тесты
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm run test:unit -- --coverage
+      - uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+  # Integration тесты
+  integration-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npm run test:integration
+
+  # E2E тесты
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - uses: microsoft/playwright-action@v2
+        with:
+          command: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+  # Визуальные тесты
+  visual-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run test:visual
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+
+  # Тесты доступности
+  accessibility-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run test:a11y
+
+  # Линтинг
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run lint
+
+  # Сборка
+  build:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run build
+```
+
+---
+
+## **12.4. Метрики качества кода**
+
+```typescript
+interface CodeQualityMetrics {
+  // Покрытие тестами
+  testCoverage: {
+    lines: '80%+';
+    branches: '75%+';
+    functions: '80%+';
+    statements: '80%+';
+  };
+
+  // Статический анализ
+  staticAnalysis: {
+    eslint: '0 ошибок';
+    typescript: '0 ошибок';
+    prettier: '100% соответствие';
+  };
+
+  // Сложность кода
+  complexity: {
+    cyclomatic: '< 10 на функцию';
+    cognitive: '< 15 на функцию';
+    maintainability: '> 85 (индекс)';
+  };
+
+  // Технические долги
+  techDebt: {
+    codeSmells: '< 50';
+    bugs: '0 критических';
+    vulnerabilities: '0';
+    duplications: '< 3%';
+  };
+
+  // Размер кода
+  size: {
+    bundleSize: '< 500KB (gzipped)';
+    chunkSize: '< 250KB (gzipped)';
+    assetSize: '< 5MB (3D модели)';
+  };
+}
+```
+
+---
+
+## **12.5. Отчётность о тестировании**
+
+### **Формат отчёта:**
+
+```markdown
+# Отчёт о тестировании - Этап X
+
+## Общая информация
+- **Дата:** 2026-XX-XX
+- **Тестировщик:** [Имя/Команда]
+- **Статус:** ✅ Пройдено / ⚠️ Частично / ❌ Провалено
+
+## Метрики
+- **Покрытие тестами:** 85%
+- **Найдено багов:** 12 (3 критических, 5 средних, 4 мелких)
+- **Исправлено багов:** 10
+- **Известные проблемы:** 2
+
+## Результаты по типам тестирования
+
+### Unit тесты
+- **Всего тестов:** 245
+- **Прошло:** 243
+- **Упало:** 2
+- **Покрытие:** 87%
+
+### Integration тесты
+- **Всего тестов:** 89
+- **Прошло:** 87
+- **Упало:** 2
+- **Покрытие:** 76%
+
+### E2E тесты
+- **Всего сценариев:** 24
+- **Прошло:** 22
+- **Упало:** 2
+- **Время выполнения:** 12 мин
+
+### Нагрузочное тестирование
+- **RPS:** 156 (цель: 100+) ✅
+- **p95:** 320мс (цель: < 500мс) ✅
+- **p99:** 680мс (цель: < 1000мс) ✅
+- **Error rate:** 0.3% (цель: < 1%) ✅
+
+### Кроссбраузерное
+- **Chrome 88+:** ✅
+- **Firefox 85+:** ✅
+- **Safari 14+:** ✅
+- **Edge 88+:** ✅
+
+### Мобильное
+- **iPhone SE:** ✅
+- **iPhone 15:** ✅
+- **Samsung S23:** ✅
+- **iPad Mini:** ✅
+
+## Критические проблемы
+1. [CRITICAL] Описание проблемы
+2. [HIGH] Описание проблемы
+
+## Рекомендации
+1. Рекомендация 1
+2. Рекомендация 2
+
+## Заключение
+[Общее заключение о готовности этапа]
+```
+
+---
+
+# **ЧАСТЬ 13. РАСШИРЕННЫЕ ДАШБОРДЫ АДМИНКИ**
+
+## **13.1. Архитектура информационных дашбордов**
+
+### **Структура дашбордов админки:**
+
+```
+Админ-панель
+├── 📊 Главный дашборд
+│   ├── Ключевые метрики
+│   ├── Графики и тренды
+│   └── Алерты и уведомления
+├── 🛒 Дашборд магазина
+│   ├── Продажи
+│   ├── Заказы
+│   ├── Товары
+│   └── Конверсия
+├── 🔧 Дашборд конструктора
+│   ├── Активность
+│   ├── Конфигурации
+│   ├── Компоненты
+│   └── Производительность
+├── 👥 Дашборд пользователей
+│   ├── Пользователи
+│   ├── Активность
+│   ├── Сегменты
+│   └── OAuth
+├── 🧪 Дашборд тестирования
+│   ├── Покрытие тестами
+│   ├── Статус тестов
+│   ├── Баги и проблемы
+│   └── CI/CD статус
+├── ⚡ Дашборд производительности
+│   ├── Web Vitals
+│   ├── API метрики
+│   ├── 3D производительность
+│   └── Ресурсы сервера
+├── 🔒 Дашборд безопасности
+│   ├── Аутентификация
+│   ├── Уязвимости
+│   ├── Атаки
+│   └── Аудит
+└── 📈 Дашборд аналитики
+    ├── Трафик
+    ├── Конверсии
+    ├── Источники
+    └── Поведение
+```
+
+---
+
+## **13.2. Главный дашборд (Overview)**
+
+### **Ключевые метрики в реальном времени:**
+
+```typescript
+interface MainDashboard {
+  // Верхний ряд - ключевые показатели
+  kpis: {
+    revenue: {
+      today: number;        // Выручка сегодня
+      week: number;         // Выручка за неделю
+      month: number;        // Выручка за месяц
+      change: number;       // Изменение к прошлому периоду (%)
+    };
+    orders: {
+      pending: number;      // Ожидают оплаты
+      processing: number;   // В обработке
+      completed: number;    // Выполнены за день
+      change: number;       // Изменение (%)
+    };
+    users: {
+      total: number;        // Всего пользователей
+      new: number;          // Новые за неделю
+      active: number;       // Активные сейчас
+      change: number;       // Изменение (%)
+    };
+    configurator: {
+      sessions: number;     // Сессии конструктора сегодня
+      conversions: number;  // Конфигурации → покупки
+      conversionRate: number; // Конверсия (%)
+    };
+  };
+
+  // Графики
+  charts: {
+    revenue: {
+      type: 'line';
+      period: '30d';
+      data: Array<{date: string; value: number}>;
+    };
+    orders: {
+      type: 'bar';
+      period: '7d';
+      data: Array<{date: string; value: number}>;
+    };
+    traffic: {
+      type: 'area';
+      period: '24h';
+      data: Array<{hour: string; visitors: number}>;
+    };
+  };
+
+  // Алерты
+  alerts: {
+    critical: Array<{
+      id: string;
+      title: string;
+      description: string;
+      timestamp: Date;
+    }>;
+    warnings: Array<{
+      id: string;
+      title: string;
+      description: string;
+      timestamp: Date;
+    }>;
+  };
+
+  // Быстрые действия
+  quickActions: [
+    'Добавить товар',
+    'Обработать заказ',
+    'Посмотреть аналитику',
+    'Настройки'
+  ];
+}
+```
+
+**Визуализация:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  📊 ГЛАВНЫЙ ДАШБОРД                              [Обновить] ▼  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────┐ │
+│  │ 💰 Выручка   │ │ 📦 Заказы    │ │ 👥 Пользов.  │ │ 🔧 3D  │ │
+│  │              │ │              │ │              │ │        │ │
+│  │ 125,400 ₽    │ │ 24           │ │ 1,847        │ │ 156    │ │
+│  │ ▲ 12%        │ │ ▲ 5%         │ │ ▲ 8%         │ │ ▲ 23%  │ │
+│  │ за неделю    │ │ за сегодня   │ │ всего        │ │ сессий │ │
+│  └──────────────┘ └──────────────┘ └──────────────┘ └────────┘ │
+│                                                                 │
+│  ┌─────────────────────────────┐ ┌─────────────────────────────┐│
+│  │  📈 Динамика выручки (30д)  │ │  📊 Заказы по дням (7д)     ││
+│  │                             │ │                             ││
+│  │     ╱╲  ╱╲                  │ │  ██  ██  ██  ██  ██  ██  ██ ││
+│  │   ╱╲  ╲╱  ╲╱╲               │ │  12  18  15  24  20  28  24 ││
+│  │  ╱╲      ╱╲                 │ │  Пн  Вт  Ср  Чт  Пт  Сб  Вс ││
+│  └─────────────────────────────┘ └─────────────────────────────┘│
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  ⚠️  Алерты и уведомления                                 │  │
+│  ├───────────────────────────────────────────────────────────┤  │
+│  │  🔴 Критично: 2 товара заканчиваются (ост. < 5)           │  │
+│  │  🟡 Внимание: 3 заказа ожидают оплаты > 24ч               │  │
+│  │  🟢 Норма: Все системы работают                           │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## **13.3. Дашборд тестирования (QA Dashboard)**
+
+### **Мониторинг качества и тестирования:**
+
+```typescript
+interface QADashboard {
+  // Покрытие тестами
+  testCoverage: {
+    overall: number;        // Общее покрытие (%)
+    lines: number;          // Покрытие строк (%)
+    branches: number;       // Покрытие веток (%)
+    functions: number;      // Покрытие функций (%)
+    trend: number[];        // Тренд по дням
+  };
+
+  // Статус тестов
+  testStatus: {
+    unit: {
+      total: number;
+      passed: number;
+      failed: number;
+      skipped: number;
+      duration: number;     // мс
+    };
+    integration: {
+      total: number;
+      passed: number;
+      failed: number;
+      duration: number;
+    };
+    e2e: {
+      total: number;
+      passed: number;
+      failed: number;
+      duration: number;
+    };
+    visual: {
+      total: number;
+      passed: number;
+      failed: number;
+      changes: number;      // Визуальные изменения
+    };
+  };
+
+  // CI/CD статус
+  cicd: {
+    lastBuild: {
+      number: number;
+      status: 'success' | 'failed' | 'running';
+      duration: number;
+      timestamp: Date;
+      branch: string;
+      author: string;
+    };
+    successRate: number;    // % успешных сборок
+    avgDuration: number;    // Средняя длительность
+  };
+
+  // Баги и проблемы
+  bugs: {
+    total: number;
+    byPriority: {
+      critical: number;
+      high: number;
+      medium: number;
+      low: number;
+    };
+    byStatus: {
+      new: number;
+      inProgress: number;
+      resolved: number;
+      closed: number;
+    };
+    openedToday: number;
+    closedToday: number;
+  };
+
+  // Метрики качества
+  quality: {
+    codeSmells: number;
+    bugs: number;
+    vulnerabilities: number;
+    duplications: number;   // %
+    maintainability: number; // Индекс
+    technicalDebt: number;  // Часы
+  };
+
+  // Производительность
+  performance: {
+    api: {
+      rps: number;          // Запросов в секунду
+      p50: number;          // мс
+      p95: number;          // мс
+      p99: number;          // мс
+      errorRate: number;    // %
+    };
+    frontend: {
+      lcp: number;          // с
+      fid: number;          // мс
+      cls: number;
+      tti: number;          // с
+    };
+  };
+}
+```
+
+**Визуализация:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  🧪 ДАШБОРД ТЕСТИРОВАНИЯ                         [Обновить] ▼  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ═══ ПОКРЫТИЕ ТЕСТАМИ ═══                                      │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  Общее: 85%  ████████████████████░░░░░░░░░░░░░░░░░░░░░░  │  │
+│  │  Lines:    87%  ██████████████████████░░░░░░░░░░░░░░░░░  │  │
+│  │  Branches: 76%  █████████████████░░░░░░░░░░░░░░░░░░░░░░  │  │
+│  │  Functions: 80% ███████████████████░░░░░░░░░░░░░░░░░░░░  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  ═══ СТАТУС ТЕСТОВ ═══                                         │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────┐ │
+│  │ Unit         │ │ Integration  │ │ E2E          │ │ Visual │ │
+│  │              │ │              │ │              │ │        │ │
+│  │ ✅ 243       │ │ ✅ 87        │ │ ✅ 22        │ │ ✅ 45  │ │
+│  │ ❌ 2         │ │ ❌ 2         │ │ ❌ 2         │ │ ❌ 1   │ │
+│  │ ⏭️ 5         │ │ ⏭️ 1         │ │ ⏭️ 0         │ │ ⏭️ 2   │ │
+│  │ 1.2с         │ │ 3.4с         │ │ 12мин        │ │ 2.1с   │ │
+│  └──────────────┘ └──────────────┘ └──────────────┘ └────────┘ │
+│                                                                 │
+│  ═══ CI/CD СТАТУС ═══                                          │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  Последняя сборка: #247 ✅ Успешно                        │  │
+│  │  Ветка: main | Автор: Ivan Dev | 23 фев 2026, 14:32      │  │
+│  │  Длительность: 8мин 34с                                   │  │
+│  │                                                           │  │
+│  │  История: ✅ ✅ ✅ ❌ ✅ ✅ ✅ ✅ ✅ ✅ (90% успех)          │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  ═══ БАГИ ═══                                                  │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐            │
+│  │ Критично     │ │ Высокий      │ │ Средний      │            │
+│  │      3       │ │     12       │ │     24       │            │
+│  │  🔴🔴🔴     │ │  🟠🟠...     │ │  🟡🟡...     │            │
+│  └──────────────┘ └──────────────┘ └──────────────┘            │
+│  Открыто сегодня: 5 | Закрыто: 8                                │
+│                                                                 │
+│  ═══ ПРОИЗВОДИТЕЛЬНОСТЬ ═══                                    │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  API: 156 RPS | p95: 320мс ✅ | p99: 680мс ✅ | 0.3% ❌   │  │
+│  │  Frontend: LCP: 1.8с ✅ | FID: 45мс ✅ | CLS: 0.05 ✅    │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## **13.4. Дашборд производительности (Performance Dashboard)**
+
+### **Мониторинг производительности системы:**
+
+```typescript
+interface PerformanceDashboard {
+  // Web Vitals (Frontend)
+  webVitals: {
+    lcp: {
+      value: number;        // с
+      rating: 'good' | 'needs-improvement' | 'poor';
+      distribution: {
+        good: number;       // %
+        needsImprovement: number;
+        poor: number;
+      };
+    };
+    fid: {
+      value: number;        // мс
+      rating: 'good' | 'needs-improvement' | 'poor';
+    };
+    cls: {
+      value: number;
+      rating: 'good' | 'needs-improvement' | 'poor';
+    };
+    tti: {
+      value: number;        // с
+      rating: 'good' | 'needs-improvement' | 'poor';
+    };
+  };
+
+  // API метрики
+  api: {
+    requests: {
+      total: number;        // За 24ч
+      success: number;
+      failed: number;
+      rate: number;         // RPS
+    };
+    latency: {
+      p50: number;          // мс
+      p90: number;
+      p95: number;
+      p99: number;
+    };
+    errors: {
+      total: number;
+      by4xx: number;
+      by5xx: number;
+      rate: number;         // %
+    };
+    endpoints: Array<{
+      path: string;
+      requests: number;
+      avgLatency: number;
+      errorRate: number;
+    }>;
+  };
+
+  // 3D производительность
+  visual3D: {
+    fps: {
+      desktop: number;
+      tablet: number;
+      mobile: number;
+    };
+    memory: {
+      heap: number;         // MB
+      textures: number;     // MB
+      geometry: number;     // MB
+    };
+    scene: {
+      drawCalls: number;
+      triangles: number;
+      nodes: number;
+    };
+    loadTime: {
+      initial: number;      // с
+      components: number;   // с
+      total: number;        // с
+    };
+  };
+
+  // Ресурсы сервера
+  server: {
+    cpu: {
+      usage: number;        // %
+      cores: number;
+      load: number[];       // 1, 5, 15 мин
+    };
+    memory: {
+      total: number;        // GB
+      used: number;         // GB
+      available: number;    // GB
+      percentage: number;   // %
+    };
+    disk: {
+      total: number;        // GB
+      used: number;         // GB
+      available: number;    // GB
+      percentage: number;   // %
+      io: {
+        read: number;       // MB/s
+        write: number;      // MB/s
+      };
+    };
+    network: {
+      incoming: number;     // Mbps
+      outgoing: number;     // Mbps
+      connections: number;
+    };
+  };
+
+  // База данных
+  database: {
+    connections: {
+      active: number;
+      idle: number;
+      max: number;
+    };
+    queries: {
+      total: number;        // За 24ч
+      perSecond: number;
+      slow: number;         // > 1с
+    };
+    latency: {
+      avg: number;          // мс
+      p95: number;
+      p99: number;
+    };
+    size: {
+      total: number;        // GB
+      tables: number;       // GB
+      indexes: number;      // GB
+    };
+  };
+
+  // Redis
+  cache: {
+    hitRate: number;        // %
+    missRate: number;       // %
+    memory: number;         // MB
+    keys: number;
+    operations: number;     // ops/sec
+  };
+}
+```
+
+**Визуализация:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ⚡ ДАШБОРД ПРОИЗВОДИТЕЛЬНОСТИ                   [Обновить] ▼  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ═══ WEB VITALS ═══                                            │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────┐ │
+│  │ LCP          │ │ FID          │ │ CLS          │ │ TTI    │ │
+│  │              │ │              │ │              │ │        │ │
+│  │ 1.8с  ✅     │ │ 45мс  ✅     │ │ 0.05  ✅     │ │ 2.1с ✅│ │
+│  │ < 2.5с       │ │ < 100мс      │ │ < 0.1        │ │
+
+---
+
+# **ПРИЛОЖЕНИЕ A: ВЕРСИИ СТЕКА (АКТУАЛЬНЫЕ)**
+
+```json
+{
+  "next": "15.1.x",
+  "react": "19.0.x",
+  "react-dom": "19.0.x",
+  "typescript": "5.7.x",
+  "tailwindcss": "4.0.x",
+  "three": "0.170.x",
+  "@react-three/fiber": "8.17.x",
+  "@react-three/drei": "9.120.x",
+  "gsap": "3.12.x",
+  "framer-motion": "11.15.x",
+  "zustand": "4.5.x",
+  "@tanstack/react-query": "5.62.x",
+  "prisma": "6.2.x",
+  "@prisma/client": "6.2.x",
+  "next-auth": "5.0.0-beta.25",
+  "react-admin": "4.16.x",
+  "vite": "6.0.x",
+  "postgres": "16.x",
+  "redis": "7.4.x",
+  "docker": "27.x",
+  "nginx": "1.26.x"
+}
+```
+
+### **Минимальные версии браузеров:**
+
+```json
+{
+  "chrome": "88+",
+  "firefox": "85+",
+  "safari": "14+",
+  "edge": "88+",
+  "opera": "74+",
+  "yandex": "21+",
+  "samsung-internet": "14+"
+}
+```
+
+---
+
+# **ПРИЛОЖЕНИЕ B: ЧЕК-ЛИСТ ЗАВЕРШЕНИЯ**
+
+## **Этап 0: Базовая инфраструктура**
+
+- [x] Docker окружение (PostgreSQL + Redis)
+- [x] Next.js API с Prisma ORM
+- [x] React Admin админ-панель (базовая)
+- [x] Middleware безопасности
+- [x] Тестовые данные в БД
+- [x] Публичные API эндпоинты
+- [ ] Защита по IP (требуется доработка)
+- [ ] React Admin компоненты (требуется настройка)
+
+## **Этап 1: Улучшение базового функционала**
+
+- [ ] CRUD товаров в админке
+- [ ] CRUD категорий в админке
+- [ ] CRUD услуг ремонта в админке
+- [ ] Загрузка изображений
+- [ ] Подключение фронтенда к новому API
+- [ ] Лендинг "Продажа гриндеров"
+- [ ] Лендинг "Ремонт оборудования"
+- [ ] IP whitelist для админки
+- [ ] JWT аутентификация
+- [ ] Production конфигурация
+
+## **Этап 2: Адаптивность и кроссбраузерность**
+
+- [ ] Mobile First вёрстка
+- [ ] Breakpoints: 320, 480, 768, 1024, 1440, 1920
+- [ ] Адаптивные изображения
+- [ ] CSS префиксы (Autoprefixer)
+- [ ] Полифилы для старых браузеров
+- [ ] 3D fallback для старых браузеров
+- [ ] Тестирование на 10+ устройствах
+- [ ] Lighthouse score > 90
+
+## **Этап 3: 3D Конструктор (базовая версия)**
+
+- [ ] Three.js + React Three Fiber сцена
+- [ ] Загрузка .glb/.gltf моделей
+- [ ] Орбитальное управление камерой
+- [ ] Точки крепления (mount points)
+- [ ] Выбор узлов из панели
+- [ ] Проверка совместимости
+- [ ] Расчёт цены в реальном времени
+- [ ] Сохранение конфигурации (JSON)
+- [ ] Простые анимации (fade in/out)
+
+## **Этап 4: Продвинутые анимации конструктора**
+
+- [ ] Анимация отвинчивания (unscrew)
+- [ ] Анимация удаления (fly out)
+- [ ] Анимация добавления (fly in)
+- [ ] Анимация привинчивания (screw)
+- [ ] Анимация замены (replace)
+- [ ] Физика и эффекты (collision, gravity)
+- [ ] LOD (уровни детализации)
+- [ ] Draco сжатие геометрии
+- [ ] Режим reduced motion
+
+## **Этап 5: Интернет-магазин**
+
+- [ ] Каталог товаров с фильтрами
+- [ ] Карточка товара с галереей
+- [ ] Корзина (добавление/удаление)
+- [ ] Промокоды
+- [ ] Расчёт доставки
+- [ ] Оформление заказа (checkout)
+- [ ] Личный кабинет
+- [ ] История заказов
+- [ ] Избранное
+
+## **Этап 6: Онлайн-оплата**
+
+- [ ] CloudPayments интеграция
+- [ ] ЮKassa интеграция
+- [ ] Webhook обработчики
+- [ ] Обработка успешной оплаты
+- [ ] Обработка ошибок
+- [ ] Возвраты (рефанды)
+- [ ] PCI DSS compliance
+- [ ] 3D Secure
+
+## **Этап 7: Авторизация (OAuth)**
+
+- [ ] Google OAuth 2.0
+- [ ] Яндекс OAuth 2.0
+- [ ] Telegram Login
+- [ ] NextAuth.js настройка
+- [ ] Кнопки входа на сайте
+- [ ] Связывание OAuth с локальным аккаунтом
+- [ ] История просмотров
+- [ ] Сессионное управление
+
+## **Этап 8: Интеграции и уведомления**
+
+- [ ] Telegram бот для уведомлений
+- [ ] Отправка заказов в Telegram
+- [ ] Форма связи с менеджером
+- [ ] Email уведомления (SMTP)
+- [ ] Шаблоны писем
+- [ ] СДЭК API
+- [ ] BoxBerry API
+- [ ] Google Analytics 4
+- [ ] Яндекс.Метрика
+
+## **Этап 9: Тестирование и запуск**
+
+- [ ] Unit тесты
+- [ ] Integration тесты
+- [ ] E2E тесты (Playwright/Cypress)
+- [ ] Нагрузочное тестирование (k6)
+- [ ] SEO оптимизация
+- [ ] API документация
+- [ ] Инструкция для админки
+- [ ] Production развёртывание
+- [ ] SSL сертификаты
+- [ ] CDN (Cloudflare)
+- [ ] Бэкапы
+- [ ] Мониторинг (Sentry, UptimeRobot)
+
+---
+
+# **ПРИЛОЖЕНИЕ C: СТАТУС ПРОЕКТА**
+
+## **Текущий этап:** Этап 0 (Завершён на 90%)
+
+## **Следующий этап:** Этап 1 (Улучшение базового функционала)
+
+## **Общая готовность:** ~10%
+
+```
+Прогресс по этапам:
+
+Этап 0  ████████████████████░░  90% ✅ Завершён
+Этап 1  ░░░░░░░░░░░░░░░░░░░░░░   0% 🔄 В очереди
+Этап 2  ░░░░░░░░░░░░░░░░░░░░░░   0% ⏳ Запланировано
+Этап 3  ░░░░░░░░░░░░░░░░░░░░░░   0% ⏳ Запланировано
+Этап 4  ░░░░░░░░░░░░░░░░░░░░░░   0% ⏳ Запланировано
+Этап 5  ░░░░░░░░░░░░░░░░░░░░░░   0% ⏳ Заплан��рова��о
+Э��ап 6  ░░░░░░░░░░░░░░░░░░░░░░   0% ⏳ Запланировано
+Этап 7  ░░░░░░░░░░░░░░░░░░░░░░   0% ⏳ Запланировано
+Этап 8  ░░░░░░░░░░░░░░░░░░░░░░   0% ⏳ Запланировано
+Этап 9  ░░░░░░░░░░░░░░░░░░░░░░   0% ⏳ Запланировано
+```
+
+## **Ближайшие задачи (Этап 1):**
+
+1. Настроить CRUD компонентов в React Admin
+2. Реализовать загрузку изображений
+3. Подключить фронтенд к новому API
+4. Настроить IP whitelist для админки
+5. Развернуть на staging-сервере
+
+---
+
+**Версия ТЗ:** 4.1 (С системой тестирования, дашбордами и конфигурацией по этапам)
+**Дата обновления:** 26 февраля 2026
+**Статус:** Готово к поэтапной реализации с комплексным тестированием и централизованной конфигурацией 🚀
+
+**Контакты для вопросов:**
+- Проект требует последовательной реализации по этапам
+- Приоритет: Этапы 1-2 (базовый функционал + адаптивность)
+- 3D конструктор и анимации — этапы 3-4
+- Магазин и оплата — этапы 5-6
+- Авторизация — этап 7
+
+---
+
+# **ПРИЛОЖЕНИЕ D: МАТРИЦА ТЕСТИРОВАНИЯ**
+
+## **D.1. Матрица покрытия тестами по модулям**
+
+| Модуль | Unit | Integration | E2E | Visual | A11y | Performance |
+|--------|------|-------------|-----|--------|------|-------------|
+| **Инфраструктура** | ⚪ | 🟢 | ⚪ | ⚪ | ⚪ | 🟢 |
+| **База данных** | 🟢 | 🟢 | ⚪ | ⚪ | ⚪ | 🟢 |
+| **API** | 🟢 | 🟢 | 🟢 | ⚪ | ⚪ | 🟢 |
+| **Админка** | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 |
+| **Фронтенд** | 🟢 | ⚪ | 🟢 | 🟢 | 🟢 | 🟢 |
+| **3D Конструктор** | 🟢 | ⚪ | 🟢 | ⚪ | ⚪ | 🟢 |
+| **Магазин** | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 |
+| **Оплата** | 🟢 | 🟢 | 🟢 | ⚪ | ⚪ | 🟢 |
+| **Авторизация** | 🟢 | 🟢 | 🟢 | ⚪ | ⚪ | 🟢 |
+| **Уведомления** | 🟢 | 🟢 | 🟢 | ⚪ | ⚪ | ⚪ |
+
+**Условные обозначения:**
+- 🟢 Обязательно
+- 🟡 Рекомендуется
+- ⚪ Опционально/Не применимо
+
+## **D.2. Матрица тестирования по браузерам**
+
+| Функция | Chrome 88+ | Firefox 85+ | Safari 14+ | Edge 88+ | Opera 74+ | Яндекс 21+ |
+|---------|------------|-------------|------------|----------|-----------|------------|
+| **Сайт (базово)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Магазин** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **3D Конструктор** | ✅ | ✅ | ⚠️ | ✅ | ⚠️ | ✅ |
+| **Оплата** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Админка** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **OAuth** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+**Условные обозначения:**
+- ✅ Полная поддержка
+- ⚠️ Ограниченная поддержка (fallback)
+- ❌ Не поддерживается
+
+## **D.3. Матрица устройств**
+
+| Функция | iPhone SE | iPhone 15 | Samsung S23 | iPad Mini | Ноутбук | Десктоп |
+|---------|-----------|-----------|-------------|-----------|---------|---------|
+| **Сайт (базово)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Магазин** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **3D Конструктор** | ⚠️ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Оплата** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Админка** | ⚠️ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+**Условные обозначения:**
+- ✅ Полная поддержка
+- ⚠️ Ограниченная поддержка (упрощённый UI)
+
+---
+
+# **ПРИЛОЖЕНИЕ E: ЧЕК-ЛИСТЫ ТЕСТИРОВАНИЯ**
+
+## **E.1. Общий чек-лист готовности этапа**
+
+```markdown
+## Критерии готовности этапа (Definition of Done)
+
+### Код
+- [ ] Все unit тесты проходят (80%+ покрытие)
+- [ ] Все integration тесты проходят
+- [ ] E2E тесты критических путей проходят
+- [ ] Линтинг без ошибок
+- [ ] TypeScript без ошибок
+- [ ] Code review проведён
+
+### Производительность
+- [ ] Lighthouse Mobile > 90
+- [ ] Lighthouse Desktop > 90
+- [ ] LCP < 2.5с
+- [ ] FID < 100мс
+- [ ] CLS < 0.1
+
+### Доступность
+- [ ] axe-core: 0 критических нарушений
+- [ ] WCAG 2.1 AA compliance
+- [ ] Клавиатурная навигация работает
+
+### Безопасность
+- [ ] OWASP Top 10 проверено
+- [ ] Зависимости без уязвимостей
+- [ ] HTTPS настроен
+- [ ] CORS настроен
+
+### Документация
+- [ ] README обновлён
+- [ ] API документация актуальна
+- [ ] Инструкции для пользователей
+
+### Развёртывание
+- [ ] Staging развёрнут
+- [ ] Production развёрнут (если релиз)
+- [ ] Мониторинг настроен
+- [ ] Бэкапы работают
+```
+
+## **E.2. Чек-лист спринта**
+
+```markdown
+## Ежедневный чек-лист разработчика
+
+### Перед коммитом
+- [ ] Код отформатирован (Prettier)
+- [ ] Линтинг пройден (ESLint)
+- [ ] TypeScript ошибки исправлены
+- [ ] Unit тесты написаны
+- [ ] Локально всё работает
+
+### Перед PR
+- [ ] Все тесты проходят локально
+- [ ] Coverage не упал
+- [ ] Документация обновлена
+- [ ] Changelog обновлён
+- [ ] Rebase на main сделан
+
+### После PR
+- [ ] Code review получен
+- [ ] Комментарии исправлены
+- [ ] CI/CD прошёл
+- [ ] Merge выполнен
+- [ ] Staging протестирован
+```
+
+## **E.3. Чек-лист релиза**
+
+```markdown
+## Предрелизный чек-лист
+
+### За неделю до релиза
+- [ ] Feature freeze
+- [ ] Regression тестирование
+- [ ] Нагрузочное тестирование
+- [ ] Security сканирование
+- [ ] Документация готова
+
+### За день до релиза
+- [ ] Smoke тесты прошли
+- [ ] Бэкап сделан
+- [ ] Rollback план готов
+- [ ] Команда готова
+- [ ] Коммуникация отправлена
+
+### В день релиза
+- [ ] Pre-deployment проверки
+- [ ] Deployment выполнен
+- [ ] Smoke тесты после деплоя
+- [ ] Мониторинг активен
+- [ ] Поддержка готова
+
+### После релиза
+- [ ] Мониторинг метрик
+- [ ] Сбор фидбека
+- [ ] Баги фиксятся
+- [ ] Post-mortem (если нужны)
+```
+
+---
+
+# **ПРИЛОЖЕНИЕ F: ШАБЛОНЫ ОТЧЁТОВ**
+
+## **F.1. Шаблон отчёта о тестировании этапа**
+
+```markdown
+# Отчёт о тестировании - Этап X
+
+## Общая информация
+| Параметр | Значение |
+|----------|----------|
+| Дата | 2026-XX-XX |
+| Тестировщик | [Имя] |
+| Статус | ✅ Пройдено / ⚠️ Частично / ❌ Провалено |
+| Версия | X.X.X |
+
+## Метрики качества
+| Метрика | Значение | Цель | Статус |
+|---------|----------|------|--------|
+| Покрытие тестами | XX% | 80%+ | ✅/⚠️/❌ |
+| Unit тестов | XXX | - | ✅ |
+| Integration тестов | XX | - | ✅ |
+| E2E сценариев | XX | - | ✅ |
+| Багов найдено | XX | - | - |
+| Багов исправлено | XX | - | - |
+
+## Результаты по типам тестирования
+
+### Unit тесты
+- **Всего:** XXX
+- **Прошло:** XXX
+- **Упало:** X
+- **Покрытие:** XX%
+
+### Integration тесты
+- **Всего:** XX
+- **Прошло:** XX
+- **Упало:** X
+
+### E2E тесты
+- **Всего сценариев:** XX
+- **Прошло:** XX
+- **Упало:** X
+- **Время выполнения:** XX мин
+
+### Нагрузочное тестирование
+| Метрика | Значение | Цель | Статус |
+|---------|----------|------|--------|
+| RPS | XXX | 100+ | ✅/❌ |
+| p95 | XXXмс | <500мс | ✅/❌ |
+| p99 | XXXмс | <1000мс | ✅/❌ |
+| Error rate | X.X% | <1% | ✅/❌ |
+
+### Кроссбраузерное тестирование
+| Браузер | Статус | Примечание |
+|---------|--------|------------|
+| Chrome 88+ | ✅ | - |
+| Firefox 85+ | ✅ | - |
+| Safari 14+ | ✅/⚠️ | - |
+| Edge 88+ | ✅ | - |
+
+### Мобильное тестирование
+| Устройство | Статус | Примечание |
+|------------|--------|------------|
+| iPhone SE | ✅/⚠️ | - |
+| iPhone 15 | ✅ | - |
+| Samsung S23 | ✅ | - |
+| iPad Mini | ✅ | - |
+
+## Критические проблемы
+| ID | Описание | Приоритет | Статус |
+|----|----------|-----------|--------|
+| 1 | ... | Critical | Open/Closed |
+
+## Известные ограничения
+1. ...
+2. ...
+
+## Рекомендации
+1. ...
+2. ...
+
+## Заключение
+[Общее заключение о готовности этапа]
+
+## Приложения
+- [ ] Скриншоты
+- [ ] Логи ошибок
+- [ ] Отчёты инструментов
+```
+
+## **F.2. Шаблон баг-репорта**
+
+```markdown
+# Баг-репорт #XXX
+
+## Основная информация
+| Поле | Значение |
+|------|----------|
+| ID | #XXX |
+| Заголовок | [Краткое описание] |
+| Приоритет | Critical/High/Medium/Low |
+| Серьёзность | Blocker/Critical/Major/Minor/Trivial |
+| Статус | New/In Progress/Resolved/Closed |
+
+## Описание
+[Подробное описание проблемы]
+
+## Шаги воспроизведения
+1. Шаг 1
+2. Шаг 2
+3. Шаг 3
+
+## Ожидаемый результат
+[Что должно было произойти]
+
+## Фактический результат
+[Что произошло на самом деле]
+
+## Окружение
+| Параметр | Значение |
+|----------|----------|
+| ОС | Windows 11 / macOS 14 / Ubuntu 22.04 |
+| Браузер | Chrome 120.0.6099.109 |
+| Устройство | Desktop / iPhone 15 / etc. |
+| Версия | X.X.X |
+
+## Вложения
+- [ ] Скриншоты
+- [ ] Логи
+- [ ] Видео
+
+## Дополнительная информация
+[Любая другая полезная информация]
+```
+
+---
+
+**Конец документа ТЗ версии 4.1**

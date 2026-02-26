@@ -1,11 +1,12 @@
 # Ветвление в проекте GrinderMaster
 
-## 🌳 Структура веток
+> 📋 Git workflow для проекта GrinderMaster
 
-### `main` (основная ветка)
-- **Назначение**: Продакшн-версия приложения
-- **Содержит**: Стабильный код, готовый к развертыванию
-- **Правила**: Только через Pull Request из `production`
+**См. также:** [Архитектура](ARCHITECTURE.md) | [Разработка](DEVELOPMENT.md) | [Главная](README.md)
+
+---
+
+## 🌳 Структура веток
 
 ### `production` (пред-продакшн)
 - **Назначение**: Финальное тестирование перед продакшеном
@@ -21,6 +22,7 @@
 - **Назначение**: Основная разработка
 - **Содержит**: Актуальные изменения и новые фичи
 - **Правила**: Прямая работа разработчиков
+- **Статус**: ✅ **Текущая активная ветка**
 
 ## 🔄 Процесс работы
 
@@ -49,14 +51,12 @@ git push origin develop
 git checkout production
 git merge develop
 git push origin production
-# Создать Pull Request production → main
 ```
 
-### 4. Деплой
+### 4. Деплой на VPS
 ```bash
-git checkout main
-git merge production
-git push origin main
+git checkout production
+# Деплой с production ветки
 ```
 
 ## 📋 Правила коммитов
@@ -98,3 +98,12 @@ npm start
 - **GitHub Repository**: https://github.com/TemplarD/Pirit
 - **Issues**: https://github.com/TemplarD/Pirit/issues
 - **Pull Requests**: https://github.com/TemplarD/Pirit/pulls
+- **Conventional Commits**: https://www.conventionalcommits.org/
+
+---
+
+**См. также:**
+- [Архитектура проекта](ARCHITECTURE.md)
+- [Настройка окружения](DEVELOPMENT.md)
+- [Конфигурация](CONFIGURATION.md)
+- [Деплой на VPS](DEPLOYMENT.md)
