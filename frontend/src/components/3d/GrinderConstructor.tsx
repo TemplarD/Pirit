@@ -6,6 +6,7 @@ import { OrbitControls, Stage, PerspectiveCamera, Environment, Html } from '@rea
 import { motion, AnimatePresence } from 'framer-motion'
 import * as THREE from 'three'
 import { GrinderNodeType, AssemblyNode, AssemblyOption, GrinderConfiguration } from '@/types/constructor'
+import { AnimationType } from '@/types/animations'
 
 // Предустановленные узлы для конструктора
 const DEFAULT_NODES: AssemblyNode[] = [
@@ -133,19 +134,23 @@ const DEFAULT_NODES: AssemblyNode[] = [
 function GrinderComponent({ 
   option, 
   isSelected,
+  isAnimating = false,
+  animationType = null,
 }: { 
   option: AssemblyOption
   isSelected: boolean
+  isAnimating?: boolean
+  animationType?: AnimationType | null
 }) {
   const meshRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
   const { position, rotation, scale } = option.model3D
   
-  // Анимация вращения для выделения
+  // Анимация выделения и наведения
   useFrame((state, delta) => {
     if (!meshRef.current) return
     
-    // Плавное изменение масштаба при наведении
+    // Плавное изменение масштаба при наведении/выделении
     const targetScale = hovered || isSelected ? 1.1 : 1
     meshRef.current.scale.lerp(new THREE.Vector3(
       scale[0] * targetScale,
@@ -164,6 +169,13 @@ function GrinderComponent({
             ? new THREE.Color('#63b3ed') 
             : new THREE.Color('#4a5568')
         material.color.lerp(targetColor, delta * 10)
+        
+        // Свечение для выбранных
+        material.emissive?.lerp(
+          isSelected ? new THREE.Color('#3182ce') : new THREE.Color('#000000'),
+          delta * 10
+        )
+        material.emissiveIntensity = isSelected ? 0.3 : 0
       }
     }
   })
@@ -209,6 +221,9 @@ function ConstructorScene({
   configuration: GrinderConfiguration
   nodes: AssemblyNode[]
 }) {
+  const [selectedComponent, setSelectedComponent] = useState<{nodeType: string, optionId: string} | null>(null)
+  const [animationType, setAnimationType] = useState<AnimationType | null>(null)
+  
   return (
     <>
       <PerspectiveCamera makeDefault position={[3, 2, 3]} fov={50} />
@@ -232,6 +247,8 @@ function ConstructorScene({
               key={node.id} 
               option={option} 
               isSelected={true}
+              isAnimating={false}
+              animationType={null}
             />
           )
         })}
