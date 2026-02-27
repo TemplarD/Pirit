@@ -140,6 +140,112 @@ model ApiKey {
   @@map("api_keys")
 }
 
+// Компоненты для 3D конструктора
+model Component {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  category      ComponentCategory
+  description   String?
+  
+  // 3D модель
+  model3DUrl    String?
+  thumbnailUrl  String?
+  position      Json?    // [x, y, z]
+  rotation      Json?    // [x, y, z]
+  scale         Json?    // [x, y, z]
+  
+  // Характеристики
+  specifications Json    @default("{}")
+  
+  // Цена и наличие
+  price         Decimal
+  stock         Int      @default(0)
+  
+  // Совместимость
+  compatibleWith String[] // ID совместимых компонентов
+  
+  // Статус
+  active        Boolean  @default(true)
+  isDefault     Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  
+  // Узлы к которым относится
+  assemblyNodes AssemblyNode[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("components")
+}
+
+// Узлы сборки гриндера
+model AssemblyNode {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  nodeType      String   // base, frame, motor, etc.
+  description   String?
+  
+  // Обязательность
+  isRequired    Boolean  @default(true)
+  
+  // Порядок отображения
+  sortOrder     Int      @default(0)
+  
+  // Компоненты в узле
+  components    Component[]
+  
+  // Точки крепления
+  mountPoints   Json?    // Array of mount points
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("assembly_nodes")
+}
+
+// Сохраненные конфигурации конструктора
+model GrinderConfig {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  
+  // Выбранные компоненты
+  configuration   Json     // { nodeType: componentId }
+  
+  // Расчет цены
+  basePrice       Decimal  @default(0)
+  componentsTotal Decimal  @default(0)
+  discount        Decimal  @default(0)
+  totalPrice      Decimal  @default(0)
+  
+  // Пользователь (опционально)
+  userId          String?
+  
+  // Статус
+  isPublic        Boolean  @default(false)
+  isPreset        Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("grinder_configs")
+}
+
+enum ComponentCategory {
+  BASE
+  FRAME
+  MOTOR
+  DRIVE_ROLLER
+  IDLER_ROLLER
+  TENSIONER
+  BELT
+  GUARD
+  ACCESSORY
+}
+
 enum UserRole {
   USER
   ADMIN
