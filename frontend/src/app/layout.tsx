@@ -24,6 +24,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Гарантируем что children всегда определен
+  const safeChildren = children ?? null;
+  
   return (
     <html lang="ru" suppressHydrationWarning>
       <body
@@ -31,7 +34,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <LanguageProvider>
-            {children}
+            {safeChildren}
           </LanguageProvider>
         </ThemeProvider>
       </body>

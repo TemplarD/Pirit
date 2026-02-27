@@ -11,9 +11,12 @@ export default function ConstructorLayout({
 }: {
   children: ReactNode;
 }) {
+  // Гарантируем что children всегда определен
+  const safeChildren = children ?? null;
+  
   return (
     <div className="h-screen w-screen overflow-hidden">
-      {children ?? null}
+      {safeChildren}
     </div>
   );
 }

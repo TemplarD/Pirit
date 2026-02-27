@@ -34,15 +34,19 @@ async function testPage() {
   
   console.log('📖 Загрузка http://localhost:3002/constructor...')
   
+  // Включаем эмуляцию desktop
+  await page.setViewport({ width: 1920, height: 1080 })
+  await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+  
   try {
     await page.goto('http://localhost:3002/constructor', {
       waitUntil: 'networkidle0',
       timeout: 30000
     })
     
-    // Ждем дополнительно 5 секунд для рендеринга 3D
-    console.log('⏳ Ждем рендеринг 3D...')
-    await new Promise(r => setTimeout(r, 5000))
+    // Ждем дополнительно 10 секунд для рендеринга 3D и загрузки Three.js
+    console.log('⏳ Ждем рендеринг 3D и загрузку Three.js...')
+    await new Promise(r => setTimeout(r, 10000))
     
     console.log('✅ Страница загружена')
     
