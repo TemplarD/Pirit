@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "3D Конструктор гриндеров | ГриндерМастер",
@@ -8,8 +9,12 @@ export const metadata: Metadata = {
 export default function ConstructorLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
+  if (!children) {
+    return null;
+  }
+
   return (
     <div className="h-screen w-screen overflow-hidden">
       {children}
