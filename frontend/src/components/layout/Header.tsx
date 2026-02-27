@@ -14,6 +14,7 @@ function HeaderContent() {
   const navigation = [
     { name: t('nav.sales'), href: '/sales' },
     { name: t('nav.repair'), href: '/repair' },
+    { name: '3D Конструктор', href: '/constructor' },
     { name: t('nav.contacts'), href: '/contacts' }
   ]
 
