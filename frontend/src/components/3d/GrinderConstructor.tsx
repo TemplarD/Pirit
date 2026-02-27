@@ -164,7 +164,7 @@ function ConstructorScene({
       <Stage 
         environment="studio" 
         intensity={0.5}
-        contactShadow={{ opacity: 0.5, blur: 1, y: 0 }}
+        shadows
       >
         {nodes.map((node) => {
           const selectedOptionId = configuration.selectedComponents[node.nodeType]
