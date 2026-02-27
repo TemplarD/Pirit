@@ -10,5 +10,9 @@ export default function ConstructorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <div className="h-screen w-screen overflow-hidden">
+      {children}
+    </div>
+  );
 }
