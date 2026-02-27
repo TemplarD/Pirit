@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
-import { OrbitControls, Stage, PerspectiveCamera, Environment } from '@react-three/drei'
+import { useState, useEffect, Suspense, useRef } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { OrbitControls, Stage, PerspectiveCamera, Environment, Html } from '@react-three/drei'
 import { motion, AnimatePresence } from 'framer-motion'
+import * as THREE from 'three'
 import { GrinderNodeType, AssemblyNode, AssemblyOption, GrinderConfiguration } from '@/types/constructor'
+import { AnimationType } from '@/types/animations'
+import { useComponentAnimation } from '@/hooks/useAnimation'
 
 // Предустановленные узлы для конструктора
 const DEFAULT_NODES: AssemblyNode[] = [
@@ -128,33 +131,95 @@ const DEFAULT_NODES: AssemblyNode[] = [
   },
 ]
 
-// Компонент 3D модели
-function GrinderComponent({ option, isSelected }: { option: AssemblyOption; isSelected: boolean }) {
+// Компонент 3D модели с анимацией
+function GrinderComponent({ 
+  option, 
+  isSelected,
+  isAnimating,
+  animationType 
+}: { 
+  option: AssemblyOption
+  isSelected: boolean
+  isAnimating: boolean
+  animationType: AnimationType | null
+}) {
+  const meshRef = useRef<THREE.Group>(null)
+  const [hovered, setHovered] = useState(false)
   const { position, rotation, scale } = option.model3D
   
+  // Анимация вращения для выделения
+  useFrame((state, delta) => {
+    if (!meshRef.current) return
+    
+    // Плавное изменение масштаба при наведении
+    const targetScale = hovered || isSelected ? 1.1 : 1
+    meshRef.current.scale.lerp(new THREE.Vector3(
+      scale[0] * targetScale,
+      scale[1] * targetScale,
+      scale[2] * targetScale
+    ), delta * 10)
+    
+    // Подсветка выбранных компонентов
+    if (meshRef.current.children[0]) {
+      const child = meshRef.current.children[0] as THREE.Mesh
+      const material = child.material as THREE.MeshStandardMaterial
+      if (material) {
+        const targetColor = isSelected 
+          ? new THREE.Color('#3182ce') 
+          : hovered 
+            ? new THREE.Color('#63b3ed') 
+            : new THREE.Color('#4a5568')
+        material.color.lerp(targetColor, delta * 10)
+      }
+    }
+  })
+  
   return (
-    <group position={position} rotation={rotation} scale={scale}>
-      {/* Упрощенная модель для демонстрации */}
+    <group 
+      ref={meshRef} 
+      position={position} 
+      rotation={rotation} 
+      scale={scale}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+    >
+      {/* Упрощенная модель для демонстрации с анимацией */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial 
           color={isSelected ? '#3182ce' : '#4a5568'}
           metalness={0.5}
           roughness={0.5}
+          emissive={isSelected ? '#3182ce' : '#000000'}
+          emissiveIntensity={isSelected ? 0.3 : 0}
         />
       </mesh>
+      
+      {/* Визуальные направляющие для точек крепления */}
+      {isSelected && (
+        <Html position={[0, 0.6, 0]} center>
+          <div className="bg-blue-600 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+            {option.name}
+          </div>
+        </Html>
+      )}
     </group>
   )
 }
 
-// Сцена конструктора
+// Сцена конструктора с анимациями
 function ConstructorScene({ 
   configuration, 
-  nodes 
+  nodes,
+  onComponentSelect,
 }: { 
   configuration: GrinderConfiguration
   nodes: AssemblyNode[]
+  onComponentSelect: (nodeType: string, optionId: string) => void
 }) {
+  const [selectedComponent, setSelectedComponent] = useState<{nodeType: string, optionId: string} | null>(null)
+  const [animationType, setAnimationType] = useState<AnimationType | null>(null)
+  
   return (
     <>
       <PerspectiveCamera makeDefault position={[3, 2, 3]} fov={50} />
@@ -174,10 +239,12 @@ function ConstructorScene({
           if (!option) return null
           
           return (
-            <GrinderComponent 
+            <GrinderComponent
               key={node.id} 
               option={option} 
               isSelected={true}
+              isAnimating={false}
+              animationType={null}
             />
           )
         })}
@@ -377,12 +444,62 @@ export default function GrinderConstructor() {
           dpr={[1, 2]}
         >
           <Suspense fallback={null}>
-            <ConstructorScene 
-              configuration={configuration} 
+            <ConstructorScene
+              configuration={configuration}
               nodes={DEFAULT_NODES}
+              onComponentSelect={(nodeType, optionId) => {
+                handleSelectOption(nodeType, optionId)
+              }}
             />
           </Suspense>
         </Canvas>
+
+        {/* Панель управления анимациями */}
+        <motion.div
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="absolute top-6 right-6 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 border border-gray-200 dark:border-gray-700"
+        >
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+            Тест анимаций
+          </h3>
+          
+          <div className="space-y-2">
+            <button
+              onClick={() => console.log('Animation: ADD')}
+              className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
+            >
+              ➕ Добавить
+            </button>
+            <button
+              onClick={() => console.log('Animation: REMOVE')}
+              className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
+            >
+              ➖ Удалить
+            </button>
+            <button
+              onClick={() => console.log('Animation: UNSCREW')}
+              className="w-full px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition-colors"
+            >
+              🔓 Отвинтить
+            </button>
+            <button
+              onClick={() => console.log('Animation: SCREW')}
+              className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+            >
+              🔐 Привинтить
+            </button>
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              <p>🎯 Наведите на компонент для подсветки</p>
+              <p>🖱️ Кликните для выбора</p>
+              <p>🔄 Вращайте камеру мышкой</p>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Итоговая цена */}
         <motion.div
