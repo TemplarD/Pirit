@@ -1,12 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { api, Service } from '@/lib/api'
 
 export default function RepairContent() {
   const { t } = useLanguage()
+  
+  // Состояния
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedService, setSelectedService] = useState('all')
+  
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -16,53 +23,83 @@ export default function RepairContent() {
     message: ''
   })
 
-  const services = [
-    { id: 'all', name: t('repair.services.all') },
-    { id: 'diagnostics', name: t('repair.services.diagnostics') },
-    { id: 'maintenance', name: t('repair.services.maintenance') },
-    { id: 'emergency', name: t('repair.services.emergency') },
-    { id: 'modernization', name: t('repair.services.modernization') }
-  ]
+  const [submitting, setSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState<{ success?: boolean; error?: string } | null>(null)
 
-  const serviceList = [
-    {
-      id: 'diagnostics',
-      name: t('repair.serviceList.diagnostics.name'),
-      description: t('repair.serviceList.diagnostics.desc'),
-      price: 'от 5 000 ₽',
-      icon: '🔍'
-    },
-    {
-      id: 'maintenance',
-      name: t('repair.serviceList.maintenance.name'),
-      description: t('repair.serviceList.maintenance.desc'),
-      price: 'от 8 000 ₽',
-      icon: '🔧'
-    },
-    {
-      id: 'emergency',
-      name: t('repair.serviceList.emergency.name'),
-      description: t('repair.serviceList.emergency.desc'),
-      price: 'от 15 000 ₽',
-      icon: '🚨'
-    },
-    {
-      id: 'modernization',
-      name: t('repair.serviceList.modernization.name'),
-      description: t('repair.serviceList.modernization.desc'),
-      price: 'от 20 000 ₽',
-      icon: '⚡'
+  // Загрузка данных
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const servicesResponse = await api.services.getAll({
+        category: selectedService !== 'all' ? selectedService : undefined
+      })
+      
+      setServices(servicesResponse.data)
+    } catch (err) {
+      console.error('Failed to load services:', err)
+      setError('Не удалось загрузить услуги. Попробуйте позже.')
+    } finally {
+      setLoading(false)
     }
+  }, [selectedService])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  // Категории услуг для фильтра
+  const serviceCategories = [
+    { id: 'all', name: 'Все услуги' },
+    { id: 'diagnostics', name: 'Диагностика' },
+    { id: 'maintenance', name: 'Обслуживание' },
+    { id: 'repair', name: 'Ремонт' },
+    { id: 'modernization', name: 'Модернизация' }
   ]
 
-  const filteredServices = selectedService === 'all' 
-    ? serviceList 
-    : serviceList.filter(s => s.id === selectedService)
+  // Обработчики
+  const handleServiceChange = (serviceId: string) => {
+    setSelectedService(serviceId)
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
-    // Логика отправки формы
+    setSubmitting(true)
+    setSubmitResult(null)
+
+    try {
+      // Находим услугу по названию
+      const selectedSvc = services.find(s => s.name === formData.equipment)
+      
+      await api.requests.create({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || undefined,
+        type: 'SERVICE',
+        serviceId: selectedSvc?.id,
+        message: formData.problem || formData.message || undefined,
+      })
+
+      setSubmitResult({ success: true })
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        equipment: '',
+        problem: '',
+        message: ''
+      })
+
+      setTimeout(() => setSubmitResult(null), 5000)
+    } catch (error) {
+      console.error('Failed to submit request:', error)
+      setSubmitResult({ 
+        error: error instanceof Error ? error.message : 'Ошибка при отправке заявки' 
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleOrderClick = (service: any) => {
@@ -91,6 +128,15 @@ export default function RepairContent() {
       ...prev,
       [e.target.name]: e.target.value
     }))
+  }
+
+  // Иконки для категорий услуг
+  const serviceIcons: Record<string, string> = {
+    diagnostics: '🔍',
+    maintenance: '🔧',
+    repair: '⚙️',
+    modernization: '⚡',
+    emergency: '🚨'
   }
 
   return (
@@ -125,57 +171,91 @@ export default function RepairContent() {
             className="mb-12"
           >
             <div className="flex flex-wrap gap-4 justify-center">
-              {services.map((service) => (
+              {serviceCategories.map((category) => (
                 <button
-                  key={service.id}
-                  onClick={() => setSelectedService(service.id)}
+                  key={category.id}
+                  onClick={() => handleServiceChange(category.id)}
                   className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                    selectedService === service.id
+                    selectedService === category.id
                       ? 'bg-primary-600 text-white'
                       : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
                 >
-                  {service.name}
+                  {category.name}
                 </button>
               ))}
             </div>
           </motion.div>
 
+          {/* Загрузка / Ошибка */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-300">Загрузка услуг...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-center py-12">
+              <div className="text-red-600 dark:text-red-400 text-lg">{error}</div>
+            </div>
+          )}
+
           {/* Список услуг */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {filteredServices.map((service, index) => (
-              <motion.div
-                key={service.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
-                className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow"
-              >
-                <div className="flex items-start space-x-4">
-                  <div className="text-4xl mb-4">{service.icon}</div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                      {service.name}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      {service.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                        {service.price}
-                      </span>
-                      <button 
-                        onClick={() => handleOrderClick(service)}
-                        className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95"
-                      >
-                        {t('repair.orderButton')}
-                      </button>
-                    </div>
-                  </div>
+          {!loading && !error && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {services.length === 0 ? (
+                <div className="text-center py-12 col-span-full">
+                  <p className="text-gray-600 dark:text-gray-300 text-lg">
+                    Услуги в данной категории отсутствуют
+                  </p>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              ) : (
+                services.map((service, index) => (
+                  <motion.div
+                    key={service.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+                    className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="text-4xl mb-4">
+                        {serviceIcons[service.category] || '🔧'}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                          {service.name}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                          {service.description}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                            {service.price}
+                          </span>
+                          <button
+                            onClick={() => handleOrderClick(service)}
+                            className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all transform hover:scale-105 active:scale-95"
+                          >
+                            {t('repair.orderButton')}
+                          </button>
+                        </div>
+                        {service.warranty && (
+                          <div className="mt-3 flex items-center text-sm text-green-600 dark:text-green-400">
+                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            Гарантия
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -290,11 +370,36 @@ export default function RepairContent() {
                 />
               </div>
 
+              {/* Сообщение об успехе/ошибке */}
+              {submitResult && (
+                <div className={`p-4 rounded-lg ${
+                  submitResult.success 
+                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
+                    : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                }`}>
+                  {submitResult.success 
+                    ? '✅ Заявка успешно отправлена! Менеджер свяжется с вами в ближайшее время.' 
+                    : `❌ ${submitResult.error}`
+                  }
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold"
+                disabled={submitting}
+                className="w-full px-8 py-4 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2"
               >
-                {t('repair.form.submitButton')}
+                {submitting ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Отправка...
+                  </>
+                ) : (
+                  t('repair.form.submitButton')
+                )}
               </button>
             </form>
           </motion.div>
