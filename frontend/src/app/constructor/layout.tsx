@@ -11,13 +11,9 @@ export default function ConstructorLayout({
 }: {
   children: ReactNode;
 }) {
-  if (!children) {
-    return null;
-  }
-
   return (
     <div className="h-screen w-screen overflow-hidden">
-      {children}
+      {children ?? null}
     </div>
   );
 }
