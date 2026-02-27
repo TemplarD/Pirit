@@ -1,13 +1,11 @@
 'use client'
 
 import { useState, useEffect, Suspense, useRef } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Stage, PerspectiveCamera, Environment, Html } from '@react-three/drei'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as THREE from 'three'
 import { GrinderNodeType, AssemblyNode, AssemblyOption, GrinderConfiguration } from '@/types/constructor'
-import { AnimationType } from '@/types/animations'
-import { useComponentAnimation } from '@/hooks/useAnimation'
 
 // Предустановленные узлы для конструктора
 const DEFAULT_NODES: AssemblyNode[] = [
@@ -135,13 +133,9 @@ const DEFAULT_NODES: AssemblyNode[] = [
 function GrinderComponent({ 
   option, 
   isSelected,
-  isAnimating,
-  animationType 
 }: { 
   option: AssemblyOption
   isSelected: boolean
-  isAnimating: boolean
-  animationType: AnimationType | null
 }) {
   const meshRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
@@ -211,15 +205,10 @@ function GrinderComponent({
 function ConstructorScene({ 
   configuration, 
   nodes,
-  onComponentSelect,
 }: { 
   configuration: GrinderConfiguration
   nodes: AssemblyNode[]
-  onComponentSelect: (nodeType: string, optionId: string) => void
 }) {
-  const [selectedComponent, setSelectedComponent] = useState<{nodeType: string, optionId: string} | null>(null)
-  const [animationType, setAnimationType] = useState<AnimationType | null>(null)
-  
   return (
     <>
       <PerspectiveCamera makeDefault position={[3, 2, 3]} fov={50} />
@@ -243,8 +232,6 @@ function ConstructorScene({
               key={node.id} 
               option={option} 
               isSelected={true}
-              isAnimating={false}
-              animationType={null}
             />
           )
         })}
@@ -447,9 +434,6 @@ export default function GrinderConstructor() {
             <ConstructorScene
               configuration={configuration}
               nodes={DEFAULT_NODES}
-              onComponentSelect={(nodeType, optionId) => {
-                handleSelectOption(nodeType, optionId)
-              }}
             />
           </Suspense>
         </Canvas>
