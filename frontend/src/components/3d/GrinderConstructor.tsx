@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import * as THREE from 'three'
 import { GrinderNodeType, AssemblyNode, AssemblyOption, GrinderConfiguration } from '@/types/constructor'
 import { AnimationType } from '@/types/animations'
+import { runAllTests, formatTestResults } from '@/lib/constructor-tests'
 
 // Предустановленные узлы для конструктора
 const DEFAULT_NODES: AssemblyNode[] = [
@@ -294,10 +295,35 @@ export default function GrinderConstructor() {
   })
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  const [nodes, setNodes] = useState<AssemblyNode[]>(DEFAULT_NODES)
+  const [loading, setLoading] = useState(true)
+  const [testResults, setTestResults] = useState<string | null>(null)
+
+  // Загрузка данных из API
+  useEffect(() => {
+    async function loadData() {
+      try {
+        // Пытаемся загрузить из API
+        const response = await fetch('/api/assembly-nodes')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.data && data.data.length > 0) {
+            setNodes(data.data)
+          }
+        }
+      } catch (error) {
+        console.warn('API недоступно, используем тестовые данные:', error)
+        // Используем DEFAULT_NODES
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadData()
+  }, [])
 
   // Обновление цены при изменении конфигурации
   useEffect(() => {
-    const nodes = DEFAULT_NODES
     let total = 0
     
     nodes.forEach((node) => {
@@ -320,7 +346,15 @@ export default function GrinderConstructor() {
       },
       updatedAt: new Date(),
     }))
-  }, [configuration.selectedComponents])
+  }, [configuration.selectedComponents, nodes])
+
+  // Запуск тестов
+  const handleRunTests = () => {
+    const suites = runAllTests()
+    const results = formatTestResults(suites)
+    setTestResults(results)
+    console.log(results)
+  }
 
   // Выбор опции для узла
   const handleSelectOption = (nodeType: string, optionId: string) => {
@@ -455,18 +489,18 @@ export default function GrinderConstructor() {
           </Suspense>
         </Canvas>
 
-        {/* Панель управления анимациями */}
+        {/* Панель управления анимациями и тестами */}
         <motion.div
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="absolute top-6 right-6 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 border border-gray-200 dark:border-gray-700"
+          className="absolute top-6 right-6 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 border border-gray-200 dark:border-gray-700 max-h-[80vh] overflow-y-auto"
         >
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
             Тест анимаций
           </h3>
           
-          <div className="space-y-2">
+          <div className="space-y-2 mb-4">
             <button
               onClick={() => console.log('Animation: ADD')}
               className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
@@ -493,7 +527,22 @@ export default function GrinderConstructor() {
             </button>
           </div>
           
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Кнопка запуска тестов */}
+          <button
+            onClick={handleRunTests}
+            className="w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors mb-3"
+          >
+            🧪 Запустить тесты
+          </button>
+          
+          {/* Результаты тестов */}
+          {testResults && (
+            <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-900 rounded text-xs font-mono whitespace-pre-wrap max-h-60 overflow-y-auto">
+              {testResults}
+            </div>
+          )}
+          
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="text-xs text-gray-500 dark:text-gray-400">
               <p>🎯 Наведите на компонент для подсветки</p>
               <p>🖱️ Кликните для выбора</p>
