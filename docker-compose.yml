@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Сменили порт с 5432 на 5433 (избегаем конфликта)
     networks:
       - grindermaster-network
     restart: unless-stopped
@@ -26,7 +26,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "6380:6379"  # Сменили порт с 6379 на 6380 (избегаем конфликта)
     networks:
       - grindermaster-network
     restart: unless-stopped
