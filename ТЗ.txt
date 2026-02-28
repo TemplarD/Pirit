@@ -1,5 +1,5 @@
 ## **Техническое задание: Корпоративный сайт "ГриндерМастер" с интернет-магазином и 3D-конструктором**
-**Версия:** 4.1 (С системой тестирования, дашбордами и конфигурацией по этапам)
+**Версия:** 4.2 (2D конструктор, диагностика TypeScript, 3D перспектива)
 **Архитектура:** Next.js 15 + PostgreSQL + React Admin + 3D Visualizer
 **Цель:** Единая платформа с лендингами, полноценным интернет-магазином, онлайн-оплатой, интерактивным 3D-конструктором гриндеров и расширенной системой авторизации.
 
@@ -3705,7 +3705,7 @@ integrations:
 
 **Тестирование (требования):**
 - ✅ Telegram бот (команды/уведомления)
-- ✅ Email рассылка (шабло������ы/отправка)
+- ✅ Email рассылка (шабло�������ы/от��равка)
 - ✅ Доставка API (СДЭК/BoxBerry)
 
 ---
@@ -4201,7 +4201,7 @@ const optimizationStrategies = {
 
 ## **10.3. Защита данных**
 
-- Шифрование чувствительных да��н��х
+- Шифрование чувствитель��ых да����н���х
 - HTTPS обязательно
 - Защита от XSS
 - Защит�� от SQL injection
@@ -5249,6 +5249,214 @@ interface Stage9Testing {
 
 ## **12.3. Автоматизация тестирования (CI/CD)**
 
+### **Диагностика ошибок TypeScript и JavaScript:**
+
+```typescript
+// Настройка TypeScript для полной диагностики ошибок
+// tsconfig.json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noErrorTruncation": true,  // Показывать полные ошибки
+    "diagnostics": true,         // Выводить диагностику
+    "extendedDiagnostics": true, // Расширенная диагностика
+    "listEmittedFiles": true,    // Список скомпилированных файлов
+    "explainFiles": true         // Объяснять почему файлы включены
+  }
+}
+
+// Настройка ESLint для диагностики JavaScript/TypeScript
+// .eslintrc.json
+{
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-unused-vars": "error",
+    "no-console": "warn",
+    "no-debugger": "error"
+  }
+}
+```
+
+### **Скрипты для диагностики:**
+
+```bash
+# package.json scripts
+{
+  "scripts": {
+    "type-check": "tsc --noEmit --diagnostics",
+    "type-check:verbose": "tsc --noEmit --diagnostics --extendedDiagnostics",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "analyze": "npm run type-check:verbose && npm run lint"
+  }
+}
+```
+
+### **Отчёт об ошибках TypeScript:**
+
+```typescript
+// scripts/type-report.ts
+import { execSync } from 'child_process';
+import * as fs from 'fs';
+
+function generateTypeReport() {
+  try {
+    // Запуск TypeScript compiler с диагностикой
+    const output = execSync('npx tsc --noEmit --diagnostics --extendedDiagnostics', {
+      encoding: 'utf-8',
+      stdio: 'pipe'
+    });
+
+    // Парсинг вывода
+    const errors = output.match(/error TS\d+:.*/g) || [];
+    const warnings = output.match(/warning TS\d+:.*/g) || [];
+
+    // Генерация отчёта
+    const report = {
+      timestamp: new Date().toISOString(),
+      totalErrors: errors.length,
+      totalWarnings: warnings.length,
+      errors: errors.map(err => ({
+        message: err,
+        file: err.match(/^(.*):\d+:\d+/)?.[1],
+        line: err.match(/:(\d+):\d+/)?.[1],
+        column: err.match(/:\d+:(\d+)/)?.[1],
+        code: err.match(/TS(\d+)/)?.[1]
+      })),
+      performance: {
+        total: output.match(/Total time:.*/)?.[0],
+        files: output.match(/Files:.*/)?.[0],
+        lines: output.match(/Lines:.*/)?.[0]
+      }
+    };
+
+    // Сохранение отчёта
+    fs.writeFileSync('type-report.json', JSON.stringify(report, null, 2));
+    console.log(`📊 Отчёт сохранён: type-report.json`);
+    console.log(`❌ Ошибок: ${report.totalErrors}`);
+    console.log(`⚠️  Предупреждений: ${report.totalWarnings}`);
+
+  } catch (error) {
+    console.error('Ошибка компиляции TypeScript:', error);
+    process.exit(1);
+  }
+}
+
+generateTypeReport();
+```
+
+### **GitHub Actions для диагностики:**
+
+```yaml
+# .github/workflows/type-check.yml
+name: TypeScript Diagnostics
+
+on:
+  push:
+    branches: [develop, production]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: TypeScript Full Check
+        run: |
+          npx tsc --noEmit --diagnostics --extendedDiagnostics 2>&1 | tee type-output.txt
+      - name: Parse Errors
+        if: failure()
+        run: |
+          grep "error TS" type-output.txt > errors.txt || true
+          grep "warning TS" type-output.txt > warnings.txt || true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: typescript-errors
+          path: |
+            type-output.txt
+            errors.txt
+            warnings.txt
+```
+
+### **Автоматический сборщик ошибок:**
+
+```typescript
+// lib/error-collector.ts
+interface CollectedError {
+  type: 'typescript' | 'eslint' | 'runtime';
+  code: string;
+  message: string;
+  file: string;
+  line: number;
+  column: number;
+  stack?: string;
+  timestamp: string;
+}
+
+class ErrorCollector {
+  private errors: CollectedError[] = [];
+
+  collect(error: CollectedError) {
+    this.errors.push(error);
+    console.error(`[${error.type}] ${error.file}:${error.line}:${error.column}`);
+    console.error(`  ${error.message}`);
+  }
+
+  getReport(): string {
+    return JSON.stringify({
+      total: this.errors.length,
+      byType: {
+        typescript: this.errors.filter(e => e.type === 'typescript').length,
+        eslint: this.errors.filter(e => e.type === 'eslint').length,
+        runtime: this.errors.filter(e => e.type === 'runtime').length
+      },
+      errors: this.errors
+    }, null, 2);
+  }
+
+  saveToFile(path: string) {
+    fs.writeFileSync(path, this.getReport());
+  }
+}
+
+// Использование в runtime
+window.onerror = (message, source, lineno, colno, error) => {
+  errorCollector.collect({
+    type: 'runtime',
+    code: 'RUNTIME_ERROR',
+    message: String(message),
+    file: source || 'unknown',
+    line: lineno || 0,
+    column: colno || 0,
+    stack: error?.stack,
+    timestamp: new Date().toISOString()
+  });
+  return false;
+};
+```
+
+---
+
 ### **GitHub Actions Workflow:**
 
 ```yaml
@@ -6167,9 +6375,9 @@ interface PerformanceDashboard {
 
 ---
 
-**Версия ТЗ:** 4.1 (С системой тестирования, дашбордами и конфигурацией по этапам)
-**Дата обновления:** 26 февраля 2026
-**Статус:** Готово к поэтапной реализации с комплексным тестированием и централизованной конфигурацией 🚀
+**Версия ТЗ:** 4.2 (2D конструктор, диагностика TypeScript, 3D перспектива)
+**Дата обновления:** 28 февраля 2026
+**Статус:** Готово к реализации 2D конструктора с полной диагностикой ошибок 🚀
 
 **Контакты для вопросов:**
 - Проект требует последовательной реализации по этапам
@@ -6478,4 +6686,4 @@ interface PerformanceDashboard {
 
 ---
 
-**Конец документа ТЗ версии 4.1**
+**Конец документа ТЗ версии 4.2**
