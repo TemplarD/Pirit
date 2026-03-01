@@ -3373,35 +3373,46 @@ frontend:
 
 ---
 
-#### **ЭТАП 3: 3D Конструктор (базовая версия)** (⏳ Запланировано)
+#### **ЭТАП 3: 2D Конструктор (фотовизуализация)** (🔥 В работе)
 
 ```yaml
 # config.admin.yml - Дополнения для Этапа 3
 frontend:
   features:
-    3d:
+    constructor2d:
       enabled: true
-      renderer: "three"
-      antialias: true
-      shadows: true
-      maxTextureSize: 2048
       
+      # Изображения
+      images:
+        format: ["png", "webp"]
+        transparency: true
+        maxFileSize: "2MB"
+        views: ["front", "side", "top"]
+      
+      # Слои
+      layers:
+        maxLayers: 10
+        zIndex: "auto"
+        blendMode: "normal"
+      
+      # Управление
+      controls:
+        zoom:
+          min: 0.5
+          max: 3
+          step: 0.1
+        pan: true
+        viewPresets: ["front", "side", "top"]
+      
+      # Производительность
       performance:
-        fps:
-          desktop: 60
-          tablet: 30
-          mobile: 30
-        loadTime: 3
-        memory: 256
-      
-      lod:
-        enabled: true
-        levels: 3
-        draco: true
-        basis: true
+        preloadImages: true
+        lazyLoad: true
+        cacheLayers: true
 
-construtor:
-  enabled: true
+# Конструктор
+constructor:
+  type: "2d"
   nodes:
     - base
     - frame
@@ -3411,63 +3422,77 @@ construtor:
     - tensioner
     - belt
   
-  camera:
-    presets: ["front", "side", "top", "isometric"]
-    orbit: true
-    zoom: true
+  price:
+    liveUpdate: true
+    showBasePrice: true
+    showDifference: true
+  
+  save:
+    format: "json"
+    exportImages: true
 ```
 
 **Документация (требования):**
-- 🔧 **docs/3D_GUIDE.md** — настройка 3D сцены, модели, LOD
-- 🔧 **docs/CONSTRUCTOR.md** — архитектура конструктора
+- 🔧 **docs/CONSTRUCTOR_2D.md** — архитектура 2D конструктора, слои, изображения
+- 🔧 **docs/COMPONENTS_IMAGES.md** — требования к изображениям компонентов
 
 **Тестирование (требования):**
-- ✅ 3D производительность (FPS, memory, draw calls)
-- ✅ Загрузка моделей (.glb/.gltf)
-- ✅ Работа камеры и управления
+- ✅ 2D визуализация (отображение слоёв)
+- ✅ Переключение ракурсов
+- ✅ Зум и панорамирование
+- ✅ Расчёт цены
 
 ---
 
-#### **ЭТАП 4: Продвинутые анимации конструктора** (⏳ Запланировано)
+#### **ЭТАП 4: 3D Конструктор (перспектива)** (⏳ Отложено)
 
 ```yaml
-# config.admin.yml - Дополнения для Этапа 4
+# config.admin.yml - Дополнения для Этапа 4 (при активации)
 frontend:
   features:
-    animations:
-      enabled: true
-      physics:
-        collision: true
-        gravity: true
-        threads: true
+    3d:
+      enabled: false  # Активируется при выполнении условий
       
-      effects:
-        motionBlur: true
-        depthOfField: true
-        ambientOcclusion: true
-        highlights: true
-        shadows: true
+      # 3D модели
+      models:
+        format: ["glb", "gltf"]
+        draco: true
+        lod:
+          levels: 3
+          distances: [0, 5, 15]
       
-      types:
-        unscrew:
-          duration: 1100
-          phases: ["vibration", "rotation", "lift"]
-        remove:
-          duration: 1400
-          phases: ["detach", "flyOut", "fadeOut"]
-        add:
-          duration: 1650
-          phases: ["flyIn", "position", "descend", "snap"]
-        screw:
-          duration: 1150
-          phases: ["insert", "rotate", "tighten"]
-        replace:
-          duration: 3000
+      # Производительность
+      performance:
+        fps:
+          desktop: 60
+          tablet: 30
+          mobile: 30
+        maxDrawCalls: 100
+        maxTextureSize: 2048
       
-      accessibility:
-        reducedMotion: true
-        skipAnimation: true
+      # Камера
+      camera:
+        presets: ["front", "side", "top", "isometric", "exploded"]
+        orbit: true
+        zoom: true
+        pan: true
+      
+      # Анимации (при активации)
+      animations:
+        enabled: false
+        types: ["unscrew", "remove", "add", "screw", "replace"]
+        physics: false
 ```
+
+**Документация (требования при активации):**
+- 🔧 **docs/3D_GUIDE.md** — настройка 3D сцены, модели, LOD
+- 🔧 **docs/CONSTRUCTOR_3D.md** — архитектура 3D конструктора
+
+**Тестирование (требования при активации):**
+- ✅ 3D производительность (FPS, memory, draw calls)
+- ✅ Загрузка моделей (.glb/.gltf)
+- ✅ Работа камеры и управления
+- ✅ Анимации (физика, столкновения)
 
 **Документация (требования):**
 - 🔧 **docs/ANIMATIONS.md** — типы анимаций, физика, эффекты
