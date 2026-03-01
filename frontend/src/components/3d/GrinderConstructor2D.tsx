@@ -2,10 +2,38 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
 
-// Тестовые данные
-const TEST_NODES = [
+// Типы для 2D конструктора
+interface Component2D {
+  id: string
+  name: string
+  price: number
+  imageUrl: string
+}
+
+interface AssemblyNode {
+  id: string
+  name: string
+  nodeType: string
+  isRequired: boolean
+  sortOrder: number
+  options: Component2D[]
+}
+
+interface ViewAngle {
+  id: string
+  name: string
+  icon: string
+}
+
+const VIEW_ANGLES: ViewAngle[] = [
+  { id: 'front', name: 'Спереди', icon: '📷' },
+  { id: 'side', name: 'Сбоку', icon: '📸' },
+  { id: 'top', name: 'Сверху', icon: '👁️' },
+]
+
+// Тестовые данные (в реальности будут из API)
+const TEST_NODES: AssemblyNode[] = [
   {
     id: 'base',
     name: 'Основание',
@@ -40,13 +68,11 @@ const TEST_NODES = [
   },
 ]
 
-const VIEW_ANGLES = [
-  { id: 'front', name: 'Спереди', icon: '📷' },
-  { id: 'side', name: 'Сбоку', icon: '📸' },
-  { id: 'top', name: 'Сверху', icon: '👁️' },
-]
+interface GrinderConstructor2DProps {
+  className?: string
+}
 
-export default function GrinderConstructor2D() {
+export default function GrinderConstructor2D({ className = '' }: GrinderConstructor2DProps) {
   const [selectedComponents, setSelectedComponents] = useState<Record<string, string>>({
     BASE: 'base-std',
     MOTOR: 'motor-2kw',
@@ -77,42 +103,40 @@ export default function GrinderConstructor2D() {
     new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(price)
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Шапка сайта */}
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Логотип */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">ГМ</span>
-              </div>
-              <span className="font-bold text-xl text-gray-900">ГриндерМастер</span>
-            </Link>
-
-            {/* Навигация Desktop */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/sales" className="text-gray-700 hover:text-primary-600 transition-colors font-medium">Продажа</Link>
-              <Link href="/repair" className="text-gray-700 hover:text-primary-600 transition-colors font-medium">Ремонт</Link>
-              <Link href="/constructor" className="text-primary-600 font-medium">Конструктор</Link>
-              <Link href="/contacts" className="text-gray-700 hover:text-primary-600 transition-colors font-medium">Контакты</Link>
-            </nav>
-
-            {/* Кнопки */}
-            <div className="flex items-center space-x-4">
+    <div className={`flex flex-col h-full ${className}`}>
+      {/* Панель управления */}
+      <div className="bg-white border-b px-4 py-2 flex-shrink-0">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {VIEW_ANGLES.map((angle) => (
               <button
-                onClick={() => setShowPanel(!showPanel)}
-                className="md:hidden p-2 text-gray-600 hover:text-gray-900"
+                key={angle.id}
+                onClick={() => setCurrentAngle(angle.id)}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  currentAngle === angle.id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
               >
-                {showPanel ? '❌' : '☰'}
+                <span className="mr-2">{angle.icon}</span>
+                <span className="hidden sm:inline">{angle.name}</span>
               </button>
-            </div>
+            ))}
+          </div>
+          <div className="flex gap-2 items-center">
+            <button onClick={() => setZoom(prev => Math.max(prev - 0.2, 0.5))} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+              🔍-
+            </button>
+            <button onClick={() => setZoom(prev => Math.min(prev + 0.2, 3))} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+              🔍+
+            </button>
+            <span className="px-3 py-2 text-gray-600 text-sm">{Math.round(zoom * 100)}%</span>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Основной контент */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
         {/* Левая панель - Выбор узлов */}
         <AnimatePresence>
           {showPanel && (
@@ -120,7 +144,7 @@ export default function GrinderConstructor2D() {
               initial={{ x: -300, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -300, opacity: 0 }}
-              className="w-full md:w-80 bg-white border-r overflow-y-auto max-h-[calc(100vh-4rem)]"
+              className="w-full md:w-80 bg-white border-r overflow-y-auto flex-shrink-0"
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -177,73 +201,49 @@ export default function GrinderConstructor2D() {
           )}
         </AnimatePresence>
 
-        {/* Центральная часть - 2D визуализация */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Панель ракурсов */}
-          <div className="bg-white border-b px-4 py-2">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex gap-2 flex-wrap">
-                {VIEW_ANGLES.map((angle) => (
-                  <button
-                    key={angle.id}
-                    onClick={() => setCurrentAngle(angle.id)}
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      currentAngle === angle.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                  >
-                    <span className="mr-2">{angle.icon}</span>
-                    <span className="hidden sm:inline">{angle.name}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2 items-center">
-                <button onClick={() => setZoom(prev => Math.max(prev - 0.2, 0.5))} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                  🔍-
-                </button>
-                <button onClick={() => setZoom(prev => Math.min(prev + 0.2, 3))} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                  🔍+
-                </button>
-                <span className="px-3 py-2 text-gray-600 text-sm">{Math.round(zoom * 100)}%</span>
-              </div>
+        {/* Центральная часть - 2D сцена */}
+        <main className="flex-1 relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+          {/* Кнопка открытия панели на мобильных */}
+          {!showPanel && (
+            <button
+              onClick={() => setShowPanel(true)}
+              className="absolute top-4 left-4 z-10 px-4 py-2 bg-white border rounded-lg shadow-lg md:hidden"
+            >
+              ☰ Компоненты
+            </button>
+          )}
+
+          <div
+            className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
+            style={{ transform: `scale(${zoom})` }}
+          >
+            <div className="relative w-[600px] h-[600px] max-w-full max-h-full">
+              {TEST_NODES.map((node) => {
+                const selectedId = selectedComponents[node.nodeType]
+                const option = node.options.find(o => o.id === selectedId)
+                if (!option) return null
+                return (
+                  <motion.img
+                    key={node.id}
+                    src={option.imageUrl}
+                    alt={option.name}
+                    className="absolute inset-0 w-full h-full object-contain"
+                    style={{ zIndex: node.sortOrder }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )
+              })}
             </div>
           </div>
-
-          {/* 2D сцена */}
-          <div className="flex-1 relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-            <div
-              className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
-              style={{ transform: `scale(${zoom})` }}
-            >
-              <div className="relative w-[600px] h-[600px] max-w-full max-h-full">
-                {TEST_NODES.map((node) => {
-                  const selectedId = selectedComponents[node.nodeType]
-                  const option = node.options.find(o => o.id === selectedId)
-                  if (!option) return null
-                  return (
-                    <motion.img
-                      key={node.id}
-                      src={option.imageUrl}
-                      alt={option.name}
-                      className="absolute inset-0 w-full h-full object-contain"
-                      style={{ zIndex: node.sortOrder }}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  )
-                })}
-              </div>
-            </div>
-            <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow">
-              <p className="text-sm text-gray-600">🖱️ Используйте зум для детального просмотра</p>
-            </div>
+          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow">
+            <p className="text-sm text-gray-600">🖱️ Используйте зум для детального просмотра</p>
           </div>
         </main>
 
         {/* Правая панель - Конфигурация */}
-        <aside className="w-full md:w-72 bg-white border-l overflow-y-auto max-h-[calc(100vh-4rem)]">
+        <aside className="w-full md:w-72 bg-white border-l overflow-y-auto flex-shrink-0">
           <div className="p-4">
             <h2 className="text-lg font-bold mb-4">Конфигурация</h2>
             <div className="space-y-3">

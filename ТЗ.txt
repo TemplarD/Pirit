@@ -2951,15 +2951,39 @@ enum ContactMethod {
 - Desktop: > 1024px (3 колонки)
 
 **Компоненты:**
-- Header: sticky top-0, z-50, h-16
-- Left Panel: max-h-[calc(100vh-4rem)], overflow-y-auto
+- Header: sticky top-0, z-50, h-16 (ОБЩИЙ ДЛЯ ВСЕГО САЙТА)
+- Left Panel: max-h-full, overflow-y-auto
 - Scene: flex-1, relative, overflow-hidden
-- Right Panel: max-h-[calc(100vh-4rem)], overflow-y-auto
+- Right Panel: max-h-full, overflow-y-auto
 
 **Tailwind классы:**
 - `hidden md:flex` - скрыто на мобильных
 - `w-full md:w-80` - полная ширина на мобильных
 - `flex-col md:flex-row` - вертикально на мобильных
+
+**Модульная структура:**
+```
+┌─────────────────────────────────────────────────────────┐
+│  Header (ОБЩИЙ LAYOUT)                                  │
+│  ├── Логотип                                            │
+│  ├── Навигация                                          │
+│  └── Переключатели (тема, язык)                        │
+├─────────────────────────────────────────────────────────┤
+│  Конструктор (МОДУЛЬНЫЙ КОМПОНЕНТ)                      │
+│  ├── Панель управления (ракурсы, зум)                  │
+│  ├── Левая панель (компоненты)                         │
+│  ├── 2D сцена                                          │
+│  └── Правая панель (конфигурация)                      │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Использование на других страницах:**
+```tsx
+import GrinderConstructor2D from '@/components/3d/GrinderConstructor2D'
+
+// В любом месте сайта
+<GrinderConstructor2D className="h-[500px]" />
+```
 
 ---
 
