@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 
-// Тестовые данные (вместо API)
+// Тестовые данные
 const TEST_NODES = [
   {
     id: 'base',
@@ -54,6 +55,7 @@ export default function GrinderConstructor2D() {
   const [currentAngle, setCurrentAngle] = useState('front')
   const [zoom, setZoom] = useState(1)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  const [showPanel, setShowPanel] = useState(true)
 
   const totalPrice = TEST_NODES.reduce((sum, node) => {
     const selectedId = selectedComponents[node.nodeType]
@@ -75,78 +77,112 @@ export default function GrinderConstructor2D() {
     new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(price)
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">2D Конструктор гриндера</h1>
-          <div className="flex items-center gap-4">
-            <div className="text-lg font-semibold text-blue-600">
-              Итого: {formatPrice(totalPrice)}
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Шапка сайта */}
+      <header className="bg-white border-b sticky top-0 z-50">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Логотип */}
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">ГМ</span>
+              </div>
+              <span className="font-bold text-xl text-gray-900">ГриндерМастер</span>
+            </Link>
+
+            {/* Навигация Desktop */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="/sales" className="text-gray-700 hover:text-primary-600 transition-colors font-medium">Продажа</Link>
+              <Link href="/repair" className="text-gray-700 hover:text-primary-600 transition-colors font-medium">Ремонт</Link>
+              <Link href="/constructor" className="text-primary-600 font-medium">Конструктор</Link>
+              <Link href="/contacts" className="text-gray-700 hover:text-primary-600 transition-colors font-medium">Контакты</Link>
+            </nav>
+
+            {/* Кнопки */}
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowPanel(!showPanel)}
+                className="md:hidden p-2 text-gray-600 hover:text-gray-900"
+              >
+                {showPanel ? '❌' : '☰'}
+              </button>
             </div>
-            <button onClick={handleReset} className="px-4 py-2 text-gray-600 hover:text-gray-900 border rounded-lg">
-              Сбросить
-            </button>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Основной контент */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Левая панель - Выбор узлов */}
-        <aside className="w-80 bg-white border-r overflow-y-auto">
-          <div className="p-4">
-            <h2 className="text-lg font-bold mb-4">Компоненты</h2>
-            <div className="space-y-3">
-              {TEST_NODES.map((node) => (
-                <div key={node.id} className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => setSelectedNode(selectedNode === node.id ? null : node.id)}
-                    className="w-full p-3 text-left bg-gray-50 hover:bg-gray-100 flex justify-between items-center"
-                  >
-                    <div>
-                      <span className="font-semibold">{node.name}</span>
-                      {node.isRequired && <span className="text-xs text-red-500 ml-2">*</span>}
-                    </div>
-                    {selectedComponents[node.nodeType] && (
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    )}
-                  </button>
-                  {selectedNode === node.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-2 space-y-2">
-                        {node.options.map((option) => (
-                          <button
-                            key={option.id}
-                            onClick={() => handleSelectComponent(node.nodeType, option.id)}
-                            className={`w-full p-2 border rounded-lg text-left transition-colors ${
-                              selectedComponents[node.nodeType] === option.id
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'hover:bg-gray-50'
-                            }`}
-                          >
-                            <div className="font-medium text-sm">{option.name}</div>
-                            <div className="text-xs text-gray-600">{formatPrice(option.price)}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
+        <AnimatePresence>
+          {showPanel && (
+            <motion.aside
+              initial={{ x: -300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -300, opacity: 0 }}
+              className="w-full md:w-80 bg-white border-r overflow-y-auto max-h-[calc(100vh-4rem)]"
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold">Компоненты</h2>
+                  <button onClick={() => setShowPanel(false)} className="md:hidden text-gray-600">✕</button>
                 </div>
-              ))}
-            </div>
-          </div>
-        </aside>
+                <div className="space-y-3">
+                  {TEST_NODES.map((node) => (
+                    <div key={node.id} className="border rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => setSelectedNode(selectedNode === node.id ? null : node.id)}
+                        className="w-full p-3 text-left bg-gray-50 hover:bg-gray-100 flex justify-between items-center"
+                      >
+                        <div>
+                          <span className="font-semibold">{node.name}</span>
+                          {node.isRequired && <span className="text-xs text-red-500 ml-2">*</span>}
+                        </div>
+                        {selectedComponents[node.nodeType] && (
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        )}
+                      </button>
+                      <AnimatePresence>
+                        {selectedNode === node.id && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="p-2 space-y-2">
+                              {node.options.map((option) => (
+                                <button
+                                  key={option.id}
+                                  onClick={() => handleSelectComponent(node.nodeType, option.id)}
+                                  className={`w-full p-2 border rounded-lg text-left transition-colors ${
+                                    selectedComponents[node.nodeType] === option.id
+                                      ? 'border-blue-500 bg-blue-50'
+                                      : 'hover:bg-gray-50'
+                                  }`}
+                                >
+                                  <div className="font-medium text-sm">{option.name}</div>
+                                  <div className="text-xs text-gray-600">{formatPrice(option.price)}</div>
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
         {/* Центральная часть - 2D визуализация */}
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Панель ракурсов */}
           <div className="bg-white border-b px-4 py-2">
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {VIEW_ANGLES.map((angle) => (
                   <button
                     key={angle.id}
@@ -158,18 +194,18 @@ export default function GrinderConstructor2D() {
                     }`}
                   >
                     <span className="mr-2">{angle.icon}</span>
-                    {angle.name}
+                    <span className="hidden sm:inline">{angle.name}</span>
                   </button>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <button onClick={() => setZoom(prev => Math.max(prev - 0.2, 0.5))} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
                   🔍-
                 </button>
                 <button onClick={() => setZoom(prev => Math.min(prev + 0.2, 3))} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
                   🔍+
                 </button>
-                <span className="px-3 py-2 text-gray-600">{Math.round(zoom * 100)}%</span>
+                <span className="px-3 py-2 text-gray-600 text-sm">{Math.round(zoom * 100)}%</span>
               </div>
             </div>
           </div>
@@ -180,7 +216,7 @@ export default function GrinderConstructor2D() {
               className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
               style={{ transform: `scale(${zoom})` }}
             >
-              <div className="relative w-[600px] h-[600px]">
+              <div className="relative w-[600px] h-[600px] max-w-full max-h-full">
                 {TEST_NODES.map((node) => {
                   const selectedId = selectedComponents[node.nodeType]
                   const option = node.options.find(o => o.id === selectedId)
@@ -207,7 +243,7 @@ export default function GrinderConstructor2D() {
         </main>
 
         {/* Правая панель - Конфигурация */}
-        <aside className="w-72 bg-white border-l overflow-y-auto">
+        <aside className="w-full md:w-72 bg-white border-l overflow-y-auto max-h-[calc(100vh-4rem)]">
           <div className="p-4">
             <h2 className="text-lg font-bold mb-4">Конфигурация</h2>
             <div className="space-y-3">
@@ -237,6 +273,9 @@ export default function GrinderConstructor2D() {
             </div>
             <button className="w-full mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">
               Сохранить конфигурацию
+            </button>
+            <button onClick={handleReset} className="w-full mt-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold">
+              Сбросить
             </button>
           </div>
         </aside>
