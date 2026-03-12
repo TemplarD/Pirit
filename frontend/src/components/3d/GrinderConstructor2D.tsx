@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
 
 // Типы
 interface Component2D {
@@ -71,7 +70,11 @@ const TEST_NODES: AssemblyNode[] = [
   },
 ]
 
-export default function GrinderConstructor2D() {
+interface GrinderConstructor2DProps {
+  className?: string
+}
+
+export default function GrinderConstructor2D({ className = '' }: GrinderConstructor2DProps) {
   const [selectedComponents, setSelectedComponents] = useState<Record<string, string>>({
     BASE: 'base-std',
     MOTOR: 'motor-2kw',
@@ -102,37 +105,9 @@ export default function GrinderConstructor2D() {
     new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(price)
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Шапка сайта */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Логотип */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">ГМ</span>
-              </div>
-              <span className="font-bold text-xl text-gray-900 dark:text-white">ГриндерМастер</span>
-            </Link>
-
-            {/* Навигация Desktop */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/sales" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Продажа</Link>
-              <Link href="/repair" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Ремонт</Link>
-              <Link href="/constructor" className="text-blue-600 dark:text-blue-400 font-medium">Конструктор</Link>
-              <Link href="/contacts" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Контакты</Link>
-            </nav>
-
-            {/* Мобильное меню */}
-            <button onClick={() => setShowPanel(!showPanel)} className="md:hidden p-2 text-gray-600 dark:text-gray-400">
-              {showPanel ? '❌' : '☰'}
-            </button>
-          </div>
-        </div>
-      </header>
-
+    <div className={`flex flex-col h-full ${className}`}>
       {/* Основной контент - Grid layout */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[280px_1fr_256px] gap-0 overflow-hidden">
         
         {/* Левая панель - Компоненты */}
         <AnimatePresence>
@@ -141,10 +116,13 @@ export default function GrinderConstructor2D() {
               initial={{ x: -280, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -280, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto w-full md:w-72 flex-shrink-0"
+              className="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto"
             >
               <div className="p-4">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Компоненты</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">Компоненты</h2>
+                  <button onClick={() => setShowPanel(false)} className="lg:hidden text-gray-600 dark:text-gray-400">✕</button>
+                </div>
                 <div className="space-y-3">
                   {TEST_NODES.map((node) => (
                     <div key={node.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -171,10 +149,10 @@ export default function GrinderConstructor2D() {
                                 <button
                                   key={option.id}
                                   onClick={() => handleSelectComponent(node.nodeType, option.id)}
-                                  className={`w-full p-2 border rounded-lg text-left transition-colors ${
+                                  className={`w-full p-2 border border-gray-200 dark:border-gray-700 rounded-lg text-left transition-colors ${
                                     selectedComponents[node.nodeType] === option.id
                                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                      : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                                   }`}
                                 >
                                   <div className="font-medium text-sm text-gray-900 dark:text-white">{option.name}</div>
@@ -194,85 +172,100 @@ export default function GrinderConstructor2D() {
         </AnimatePresence>
 
         {/* Центральная часть - 2D сцена */}
-        <main className="relative overflow-hidden bg-gradient-to-br from-gray-100 dark:from-gray-800 to-gray-200 dark:to-gray-700 flex items-center justify-center p-4">
+        <main className="relative overflow-hidden bg-gradient-to-br from-gray-100 dark:from-gray-800 to-gray-200 dark:to-gray-700 flex flex-col">
+          
           {/* Кнопка открытия панели на мобильных */}
           {!showPanel && (
             <button
               onClick={() => setShowPanel(true)}
-              className="absolute top-4 left-4 z-10 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg md:hidden"
+              className="absolute top-4 left-4 z-20 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg lg:hidden"
             >
               ☰ Компоненты
             </button>
           )}
 
-          {/* Панель управления */}
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-4 py-2">
-            <div className="flex items-center gap-4 flex-wrap justify-center">
+          {/* 2D сцена с SVG - занимает всё доступное место */}
+          <div className="flex-1 relative flex items-center justify-center p-4">
+            {/* Кнопки зума - круглые, полупрозрачные, в правом нижнем углу */}
+            <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
+              <button
+                onClick={() => setZoom(prev => Math.min(prev + 0.2, 3))}
+                className="w-12 h-12 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all text-xl flex items-center justify-center"
+                title="Увеличить"
+              >
+                +
+              </button>
+              <button
+                onClick={() => setZoom(prev => Math.max(prev - 0.2, 0.5))}
+                className="w-12 h-12 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all text-xl flex items-center justify-center"
+                title="Уменьшить"
+              >
+                −
+              </button>
+            </div>
+
+            {/* Изображение с зумом */}
+            <div
+              className="relative transition-transform duration-300 ease-out"
+              style={{ transform: `scale(${zoom})` }}
+            >
+              <div className="relative w-[400px] h-[500px]">
+                {/* Послойное наложение SVG компонентов */}
+                {TEST_NODES.map((node) => {
+                  const selectedId = selectedComponents[node.nodeType]
+                  const option = node.options.find(o => o.id === selectedId)
+                  if (!option) return null
+                  return (
+                    <motion.div
+                      key={node.id}
+                      className="absolute inset-0 w-full h-full"
+                      style={{ zIndex: node.sortOrder }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      dangerouslySetInnerHTML={{ __html: option.svgUrl }}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Панель управления под изображением */}
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               {/* Ракурсы */}
-              <div className="flex gap-2">
-                {VIEW_ANGLES.map((angle) => (
-                  <button
-                    key={angle.id}
-                    onClick={() => setCurrentAngle(angle.id)}
-                    title={angle.name}
-                    className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      currentAngle === angle.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    <span className="text-lg">{angle.icon}</span>
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Ракурс:</span>
+                <div className="flex gap-2">
+                  {VIEW_ANGLES.map((angle) => (
+                    <button
+                      key={angle.id}
+                      onClick={() => setCurrentAngle(angle.id)}
+                      title={angle.name}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        currentAngle === angle.id
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <span className="mr-2">{angle.icon}</span>
+                      <span className="hidden sm:inline">{angle.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              
-              {/* Зум */}
-              <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-4">
-                <button onClick={() => setZoom(prev => Math.max(prev - 0.2, 0.5))} className="p-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-300">
-                  🔍-
-                </button>
-                <span className="text-sm text-gray-600 dark:text-gray-400 min-w-[50px] text-center">{Math.round(zoom * 100)}%</span>
-                <button onClick={() => setZoom(prev => Math.min(prev + 0.2, 3))} className="p-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-300">
-                  🔍+
-                </button>
+
+              {/* Зум процент */}
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Зум: <span className="font-semibold">{Math.round(zoom * 100)}%</span>
               </div>
             </div>
-          </div>
-
-          {/* 2D сцена с SVG */}
-          <div
-            className="relative transition-transform duration-300 ease-out"
-            style={{ transform: `scale(${zoom})` }}
-          >
-            <div className="relative w-[400px] h-[500px]">
-              {/* Послойное наложение SVG компонентов */}
-              {TEST_NODES.map((node) => {
-                const selectedId = selectedComponents[node.nodeType]
-                const option = node.options.find(o => o.id === selectedId)
-                if (!option) return null
-                return (
-                  <motion.div
-                    key={node.id}
-                    className="absolute inset-0 w-full h-full"
-                    style={{ zIndex: node.sortOrder }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    dangerouslySetInnerHTML={{ __html: option.svgUrl }}
-                  />
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Подсказка */}
-          <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur px-4 py-2 rounded-lg shadow text-sm text-gray-600 dark:text-gray-400">
-            🖱️ Используйте зум для детального просмотра
           </div>
         </main>
 
         {/* Правая панель - Конфигурация */}
-        <aside className="bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 overflow-y-auto w-full md:w-64 flex-shrink-0">
+        <aside className="bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 overflow-y-auto">
           <div className="p-4 h-full flex flex-col">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Конфигурация</h2>
             <div className="space-y-3 flex-1">
