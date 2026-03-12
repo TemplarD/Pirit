@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 
 // Типы
 interface Component2D {
@@ -70,11 +71,7 @@ const TEST_NODES: AssemblyNode[] = [
   },
 ]
 
-interface GrinderConstructor2DProps {
-  className?: string
-}
-
-export default function GrinderConstructor2D({ className = '' }: GrinderConstructor2DProps) {
+export default function GrinderConstructor2D() {
   const [selectedComponents, setSelectedComponents] = useState<Record<string, string>>({
     BASE: 'base-std',
     MOTOR: 'motor-2kw',
@@ -105,7 +102,35 @@ export default function GrinderConstructor2D({ className = '' }: GrinderConstruc
     new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(price)
 
   return (
-    <div className={`flex flex-col h-full ${className}`}>
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+      {/* ОБЩАЯ ШАПКА САЙТА */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Логотип */}
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">ГМ</span>
+              </div>
+              <span className="font-bold text-xl text-gray-900 dark:text-white">ГриндерМастер</span>
+            </Link>
+
+            {/* Навигация */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="/sales" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Продажа</Link>
+              <Link href="/repair" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Ремонт</Link>
+              <Link href="/constructor" className="text-blue-600 dark:text-blue-400 font-medium">Конструктор</Link>
+              <Link href="/contacts" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Контакты</Link>
+            </nav>
+
+            {/* Мобильное меню */}
+            <button onClick={() => setShowPanel(!showPanel)} className="md:hidden p-2 text-gray-600 dark:text-gray-400">
+              {showPanel ? '❌' : '☰'}
+            </button>
+          </div>
+        </div>
+      </header>
+
       {/* Основной контент - Grid layout */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[280px_1fr_256px] gap-0 overflow-hidden">
         
@@ -186,24 +211,6 @@ export default function GrinderConstructor2D({ className = '' }: GrinderConstruc
 
           {/* 2D сцена с SVG - занимает всё доступное место */}
           <div className="flex-1 relative flex items-center justify-center p-4">
-            {/* Кнопки зума - круглые, полупрозрачные, в правом нижнем углу */}
-            <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
-              <button
-                onClick={() => setZoom(prev => Math.min(prev + 0.2, 3))}
-                className="w-12 h-12 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all text-xl flex items-center justify-center"
-                title="Увеличить"
-              >
-                +
-              </button>
-              <button
-                onClick={() => setZoom(prev => Math.max(prev - 0.2, 0.5))}
-                className="w-12 h-12 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all text-xl flex items-center justify-center"
-                title="Уменьшить"
-              >
-                −
-              </button>
-            </div>
-
             {/* Изображение с зумом */}
             <div
               className="relative transition-transform duration-300 ease-out"
@@ -231,11 +238,11 @@ export default function GrinderConstructor2D({ className = '' }: GrinderConstruc
             </div>
           </div>
 
-          {/* Панель управления под изображением */}
+          {/* Панель управления ПОД изображением */}
           <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
             <div className="flex items-center justify-between flex-wrap gap-4">
               {/* Ракурсы */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Ракурс:</span>
                 <div className="flex gap-2">
                   {VIEW_ANGLES.map((angle) => (
@@ -256,9 +263,21 @@ export default function GrinderConstructor2D({ className = '' }: GrinderConstruc
                 </div>
               </div>
 
-              {/* Зум процент */}
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                Зум: <span className="font-semibold">{Math.round(zoom * 100)}%</span>
+              {/* Слайдер зума */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Зум:</span>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="3"
+                  step="0.1"
+                  value={zoom}
+                  onChange={(e) => setZoom(parseFloat(e.target.value))}
+                  className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <span className="text-sm font-semibold text-gray-900 dark:text-white min-w-[50px] text-center">
+                  {Math.round(zoom * 100)}%
+                </span>
               </div>
             </div>
           </div>
