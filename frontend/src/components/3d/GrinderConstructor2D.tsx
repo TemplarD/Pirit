@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import ThemeToggle from '@/components/ui/ThemeToggle'
+import LanguageToggle from '@/components/ui/LanguageToggle'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 // Типы
 interface Component2D {
@@ -66,6 +69,7 @@ const TEST_NODES: AssemblyNode[] = [
 ]
 
 export default function GrinderConstructor2D() {
+  const { t } = useLanguage()
   const [selectedComponents, setSelectedComponents] = useState<Record<string, string>>({
     BASE: 'base-std',
     MOTOR: 'motor-2kw',
@@ -149,12 +153,22 @@ export default function GrinderConstructor2D() {
               <span className="font-bold text-xl text-gray-900 dark:text-white">ГриндерМастер</span>
             </Link>
 
-            <nav className="flex items-center space-x-8">
+            <nav className="hidden md:flex items-center space-x-8">
               <Link href="/sales" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Продажа</Link>
               <Link href="/repair" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Ремонт</Link>
               <Link href="/constructor" className="text-blue-600 dark:text-blue-400 font-medium">Конструктор</Link>
               <Link href="/contacts" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Контакты</Link>
             </nav>
+
+            <div className="hidden md:flex items-center space-x-4">
+              <a href="tel:+74951234567" className="text-blue-600 dark:text-blue-400 font-semibold hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                +7 (495) 123-45-67
+              </a>
+              <div className="flex items-center space-x-2">
+                <LanguageToggle />
+                <ThemeToggle />
+              </div>
+            </div>
           </div>
         </div>
       </header>
