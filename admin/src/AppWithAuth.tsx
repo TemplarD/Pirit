@@ -20,6 +20,14 @@ import { ServiceCreate } from './components/ServiceCreate'
 import { RequestList } from './components/RequestList'
 import { RequestEdit } from './components/RequestEdit'
 
+// Конструктор - узлы и компоненты
+import { AssemblyNodeList } from './components/AssemblyNodeList'
+import { AssemblyNodeEdit } from './components/AssemblyNodeEdit'
+import { AssemblyNodeCreate } from './components/AssemblyNodeCreate'
+import { ComponentList } from './components/ComponentList'
+import { ComponentEdit } from './components/ComponentEdit'
+import { ComponentCreate } from './components/ComponentCreate'
+
 function ProtectedAdmin() {
   const { user, loading } = useAuth()
 
@@ -76,16 +84,34 @@ function ProtectedAdmin() {
       />
 
       {/* Запросы */}
-      <Resource 
-        name="requests" 
+      <Resource
+        name="requests"
         list={RequestList}
         edit={RequestEdit}
         options={{ label: '📋 Запросы клиентов' }}
       />
 
+      {/* Конструктор - Узлы */}
+      <Resource
+        name="assembly-nodes"
+        list={AssemblyNodeList}
+        edit={AssemblyNodeEdit}
+        create={AssemblyNodeCreate}
+        options={{ label: '🔧 Узлы конструктора' }}
+      />
+
+      {/* Конструктор - Компоненты */}
+      <Resource
+        name="components"
+        list={ComponentList}
+        edit={ComponentEdit}
+        create={ComponentCreate}
+        options={{ label: '🧩 Компоненты' }}
+      />
+
       {/* Аналитика */}
-      <Resource 
-        name="analytics" 
+      <Resource
+        name="analytics"
         list={() => <Analytics />}
         options={{ label: '📊 Аналитика и логи' }}
       />
