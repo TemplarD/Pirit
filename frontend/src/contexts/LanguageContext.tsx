@@ -14,6 +14,7 @@ const translations: Translations = {
   // Навигация
   'nav.sales': { ru: 'Продажа', en: 'Sales' },
   'nav.repair': { ru: 'Ремонт', en: 'Repair' },
+  'nav.constructor': { ru: 'Конструктор', en: 'Constructor' },
   'nav.contacts': { ru: 'Контакты', en: 'Contacts' },
   
   // Главная страница
