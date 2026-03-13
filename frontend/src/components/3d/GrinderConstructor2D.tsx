@@ -299,7 +299,7 @@ export default function GrinderConstructor2D() {
             <div className="flex gap-4 overflow-x-auto justify-center">
               {TEST_NODES.map((node) => (
                 <div key={node.id} className="flex-shrink-0">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">{node.name}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">{t(`constructor.${node.nodeType.toLowerCase()}`) || node.name}</div>
                   <div className="flex gap-2">
                     {node.options.map((option) => (
                       <button

@@ -144,35 +144,37 @@ model ApiKey {
 model Component {
   id            String   @id @default(cuid())
   name          String
+  nameEn        String?  // English name
   slug          String   @unique
   category      ComponentCategory
   description   String?
-  
+  descriptionEn String?  // English description
+
   // 3D модель
   model3DUrl    String?
   thumbnailUrl  String?
   position      Json?    // [x, y, z]
   rotation      Json?    // [x, y, z]
   scale         Json?    // [x, y, z]
-  
+
   // Характеристики
   specifications Json    @default("{}")
-  
+
   // Цена и наличие
   price         Decimal
   stock         Int      @default(0)
-  
+
   // Совместимость
   compatibleWith String[] // ID совместимых компонентов
-  
+
   // Статус
   active        Boolean  @default(true)
   isDefault     Boolean  @default(false)
   sortOrder     Int      @default(0)
-  
+
   // Узлы к которым относится
   assemblyNodes AssemblyNode[]
-  
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -183,22 +185,24 @@ model Component {
 model AssemblyNode {
   id            String   @id @default(cuid())
   name          String
+  nameEn        String?  // English name
   slug          String   @unique
   nodeType      String   // base, frame, motor, etc.
   description   String?
-  
+  descriptionEn String?  // English description
+
   // Обязательность
   isRequired    Boolean  @default(true)
-  
+
   // Порядок отображения
   sortOrder     Int      @default(0)
-  
+
   // Компоненты в узле
   components    Component[]
-  
+
   // Точки крепления
   mountPoints   Json?    // Array of mount points
-  
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

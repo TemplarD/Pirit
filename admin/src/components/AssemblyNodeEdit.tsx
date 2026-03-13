@@ -3,7 +3,8 @@ import { Edit, SimpleForm, TextInput, BooleanInput, NumberInput, SelectInput } f
 export const AssemblyNodeEdit = () => (
   <Edit>
     <SimpleForm>
-      <TextInput source="name" label="Название" fullWidth />
+      <TextInput source="name" label="Название (RU)" fullWidth />
+      <TextInput source="nameEn" label="Название (EN)" fullWidth />
       <TextInput source="slug" label="URL (slug)" fullWidth />
       <SelectInput
         source="nodeType"
@@ -18,7 +19,8 @@ export const AssemblyNodeEdit = () => (
         ]}
         fullWidth
       />
-      <TextInput source="description" label="Описание" multiline rows={3} fullWidth />
+      <TextInput source="description" label="Описание (RU)" multiline rows={3} fullWidth />
+      <TextInput source="descriptionEn" label="Описание (EN)" multiline rows={3} fullWidth />
       <BooleanInput source="isRequired" label="Обязательный" />
       <NumberInput source="sortOrder" label="Порядок отображения" />
       <BooleanInput source="active" label="Активен" />
