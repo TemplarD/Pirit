@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
@@ -72,8 +72,12 @@ export default function GrinderConstructor2D() {
     FRAME: 'frame-std',
   })
   const [zoom, setZoom] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [showConfig, setShowConfig] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const imageRef = useRef<HTMLDivElement>(null)
 
   const totalPrice = TEST_NODES.reduce((sum, node) => {
     const selectedId = selectedComponents[node.nodeType]
@@ -88,33 +92,53 @@ export default function GrinderConstructor2D() {
   const handleReset = () => {
     setSelectedComponents({ BASE: 'base-std', MOTOR: 'motor-2kw', FRAME: 'frame-std' })
     setZoom(1)
+    setPosition({ x: 0, y: 0 })
   }
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.2, 3))
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.2, 0.5))
 
-  // Зум колесиком мыши
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault()
-        if (e.deltaY < 0) {
-          handleZoomIn()
-        } else {
-          handleZoomOut()
-        }
-      }
+  // Зум колесиком только над изображением
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault()
+    if (e.deltaY < 0) {
+      handleZoomIn()
+    } else {
+      handleZoomOut()
     }
-    window.addEventListener('wheel', handleWheel, { passive: false })
-    return () => window.removeEventListener('wheel', handleWheel)
-  }, [])
+  }
+
+  // Перетаскивание изображения
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom > 1) {
+      setIsDragging(true)
+      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y })
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && zoom > 1) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      })
+    }
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleMouseLeave = () => {
+    setIsDragging(false)
+  }
 
   const formatPrice = (price: number) => 
     new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(price)
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
-      {/* ОБЩАЯ ШАПКА САЙТА */}
+      {/* ОБЩАЯ ШАПКА САЙТА - идентична остальным страницам */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
@@ -141,11 +165,22 @@ export default function GrinderConstructor2D() {
         {/* Центральная область - Изображение */}
         <main className="flex-1 relative overflow-hidden bg-gray-100 dark:bg-gray-800">
           
-          {/* Изображение */}
-          <div className="absolute inset-0 flex items-center justify-center p-6">
+          {/* Изображение с зумом и перетаскиванием */}
+          <div 
+            className="absolute inset-0 flex items-center justify-center p-6 overflow-hidden cursor-grab active:cursor-grabbing"
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+          >
             <div
-              className="relative transition-transform duration-300 ease-out"
-              style={{ transform: `scale(${zoom})` }}
+              ref={imageRef}
+              className="relative transition-transform duration-100 ease-out"
+              style={{ 
+                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                cursor: zoom > 1 ? 'grab' : 'default'
+              }}
             >
               <div className="relative w-[400px] h-[500px] bg-white dark:bg-gray-700 rounded-lg shadow-xl">
                 {TEST_NODES.map((node) => {
@@ -168,7 +203,7 @@ export default function GrinderConstructor2D() {
             </div>
           </div>
 
-          {/* Конфигурация - полупрозрачная, справа вверху, раскрывающаяся */}
+          {/* Конфигурация - полупрозрачная, справа вверху */}
           <div className="absolute top-6 right-6 z-10">
             <button
               onClick={() => setShowConfig(!showConfig)}
@@ -213,8 +248,8 @@ export default function GrinderConstructor2D() {
                       <span className="text-blue-600 dark:text-blue-400">{formatPrice(totalPrice)}</span>
                     </div>
                   </div>
-                  <button className="w-full mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-colors">
-                    Сохранить
+                  <button onClick={handleReset} className="w-full mt-3 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold text-sm transition-colors">
+                    Сбросить
                   </button>
                 </motion.div>
               )}
@@ -226,7 +261,7 @@ export default function GrinderConstructor2D() {
             <button
               onClick={handleZoomIn}
               className="w-12 h-12 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all text-xl flex items-center justify-center text-gray-700 dark:text-gray-300"
-              title="Увеличить (Ctrl + Scroll)"
+              title="Увеличить (Колесико вверх)"
             >
               +
             </button>
@@ -236,21 +271,21 @@ export default function GrinderConstructor2D() {
             <button
               onClick={handleZoomOut}
               className="w-12 h-12 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-lg hover:bg-white dark:hover:bg-gray-800 transition-all text-xl flex items-center justify-center text-gray-700 dark:text-gray-300"
-              title="Уменьшить (Ctrl + Scroll)"
+              title="Уменьшить (Колесико вниз)"
             >
               −
             </button>
           </div>
         </main>
 
-        {/* Нижняя панель - Компоненты и Галерея */}
+        {/* Нижняя панель - Компоненты ПО ЦЕНТРУ */}
         <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="p-4">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Компоненты</h3>
-            <div className="flex gap-4 overflow-x-auto">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 text-center">Компоненты</h3>
+            <div className="flex gap-4 overflow-x-auto justify-center">
               {TEST_NODES.map((node) => (
                 <div key={node.id} className="flex-shrink-0">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{node.name}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">{node.name}</div>
                   <div className="flex gap-2">
                     {node.options.map((option) => (
                       <button
