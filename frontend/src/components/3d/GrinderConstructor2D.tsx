@@ -154,10 +154,10 @@ export default function GrinderConstructor2D() {
             </Link>
 
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/sales" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Продажа</Link>
-              <Link href="/repair" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Ремонт</Link>
-              <Link href="/constructor" className="text-blue-600 dark:text-blue-400 font-medium">Конструктор</Link>
-              <Link href="/contacts" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">Контакты</Link>
+              <Link href="/sales" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">{t('nav.sales')}</Link>
+              <Link href="/repair" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">{t('nav.repair')}</Link>
+              <Link href="/constructor" className="text-blue-600 dark:text-blue-400 font-medium">{t('nav.constructor')}</Link>
+              <Link href="/contacts" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">{t('nav.contacts')}</Link>
             </nav>
 
             <div className="hidden md:flex items-center space-x-4">
@@ -295,7 +295,7 @@ export default function GrinderConstructor2D() {
         {/* Нижняя панель - Компоненты ПО ЦЕНТРУ */}
         <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="p-4">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 text-center">Компоненты</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 text-center">{t('constructor.components')}</h3>
             <div className="flex gap-4 overflow-x-auto justify-center">
               {TEST_NODES.map((node) => (
                 <div key={node.id} className="flex-shrink-0">

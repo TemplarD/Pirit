@@ -33,6 +33,22 @@ const translations: Translations = {
   'home.contactDesc': { ru: 'Свяжитесь с нами прямо сейчас и получите бесплатную консультацию', en: 'Contact us now and get a free consultation' },
   'home.call': { ru: 'Позвонить', en: 'Call' },
   'home.request': { ru: 'Оставить заявку', en: 'Leave Request' },
+
+  // Конструктор
+  'constructor.title': { ru: 'Конструктор гриндеров', en: 'Grinder Constructor' },
+  'constructor.components': { ru: 'Компоненты', en: 'Components' },
+  'constructor.configuration': { ru: 'Конфигурация', en: 'Configuration' },
+  'constructor.total': { ru: 'Итого:', en: 'Total:' },
+  'constructor.zoom': { ru: 'Зум:', en: 'Zoom:' },
+  'constructor.save': { ru: 'Сохранить', en: 'Save' },
+  'constructor.reset': { ru: 'Сбросить', en: 'Reset' },
+  'constructor.base': { ru: 'Основание', en: 'Base' },
+  'constructor.motor': { ru: 'Двигатель', en: 'Motor' },
+  'constructor.frame': { ru: 'Рама', en: 'Frame' },
+  'constructor.standard': { ru: 'Стандартное', en: 'Standard' },
+  'constructor.reinforced': { ru: 'Усиленное', en: 'Reinforced' },
+  'constructor.required': { ru: '* Обязательно', en: '* Required' },
+  'constructor.notSelected': { ru: 'Не выбрано', en: 'Not selected' },
   
   // 3D секция
   '3d.title': { ru: '3D модель оборудования', en: '3D Equipment Model' },
