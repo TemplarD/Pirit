@@ -22,7 +22,7 @@ export function useAuth() {
     const userData = localStorage.getItem('admin_user')
 
     if (!token || !userData) {
-      navigate('/login')
+      setLoading(false)
       return
     }
 
@@ -39,15 +39,10 @@ export function useAuth() {
         const data = await response.json()
         if (data.valid && data.user) {
           setUser(data.user)
-        } else {
-          logout()
         }
-      } else {
-        logout()
       }
     } catch (error) {
       console.error('Auth check error:', error)
-      logout()
     } finally {
       setLoading(false)
     }
