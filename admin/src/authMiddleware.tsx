@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 interface User {
   id: string
@@ -11,18 +10,10 @@ interface User {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [shouldRedirect, setShouldRedirect] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
     checkAuth()
   }, [])
-
-  useEffect(() => {
-    if (shouldRedirect) {
-      navigate('/login')
-    }
-  }, [shouldRedirect, navigate])
 
   const checkAuth = async () => {
     const token = localStorage.getItem('admin_token')
@@ -30,7 +21,6 @@ export function useAuth() {
 
     if (!token || !userData) {
       setLoading(false)
-      setShouldRedirect(true)
       return
     }
 
@@ -48,14 +38,14 @@ export function useAuth() {
         if (data.valid && data.user) {
           setUser(data.user)
         } else {
-          setShouldRedirect(true)
+          logout()
         }
       } else {
-        setShouldRedirect(true)
+        logout()
       }
     } catch (error) {
       console.error('Auth check error:', error)
-      setShouldRedirect(true)
+      logout()
     } finally {
       setLoading(false)
     }
@@ -65,7 +55,8 @@ export function useAuth() {
     localStorage.removeItem('admin_token')
     localStorage.removeItem('admin_user')
     setUser(null)
-    setShouldRedirect(true)
+    // Не используем navigate здесь - это делает компонент
+    window.location.href = '/login'
   }
 
   return { user, loading, logout, checkAuth }
@@ -90,7 +81,7 @@ export function withAuth<T extends object>(Component: React.ComponentType<T>) {
     }
 
     if (!user) {
-      return null // Компонент перенаправит на /login
+      return null
     }
 
     return <Component {...props} />
