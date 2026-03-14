@@ -236,7 +236,7 @@ export default function GrinderConstructor2D() {
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   className="absolute top-14 right-0 w-72 bg-white/95 dark:bg-gray-800/95 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4"
                 >
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Конфигурация</h3>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">{t('constructor.configuration')}</h3>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {TEST_NODES.map((node) => {
                       const selectedId = selectedComponents[node.nodeType]

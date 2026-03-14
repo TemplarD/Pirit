@@ -11,11 +11,18 @@ interface User {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [shouldRedirect, setShouldRedirect] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     checkAuth()
   }, [])
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate('/login')
+    }
+  }, [shouldRedirect, navigate])
 
   const checkAuth = async () => {
     const token = localStorage.getItem('admin_token')
@@ -23,6 +30,7 @@ export function useAuth() {
 
     if (!token || !userData) {
       setLoading(false)
+      setShouldRedirect(true)
       return
     }
 
@@ -39,10 +47,15 @@ export function useAuth() {
         const data = await response.json()
         if (data.valid && data.user) {
           setUser(data.user)
+        } else {
+          setShouldRedirect(true)
         }
+      } else {
+        setShouldRedirect(true)
       }
     } catch (error) {
       console.error('Auth check error:', error)
+      setShouldRedirect(true)
     } finally {
       setLoading(false)
     }
@@ -52,7 +65,7 @@ export function useAuth() {
     localStorage.removeItem('admin_token')
     localStorage.removeItem('admin_user')
     setUser(null)
-    navigate('/login')
+    setShouldRedirect(true)
   }
 
   return { user, loading, logout, checkAuth }
